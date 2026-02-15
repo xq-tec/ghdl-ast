@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::fmt;
 use std::ops;
 use std::ptr;
@@ -23,14 +24,14 @@ subset_declaration!(Expression ExpressionNodeId {
     SliceName(SliceName),
 });
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct UnaryOperator {
     pub kind: UnaryOperatorKind,
     pub operand: ExpressionNodeId,
     pub implementation: NodeId<SubprogramDeclaration>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub enum UnaryOperatorKind {
     #[serde(rename = "+")]
     Identity,
@@ -56,7 +57,7 @@ pub enum UnaryOperatorKind {
     ReductionXnor,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct BinaryOperator {
     pub kind: BinaryOperatorKind,
     pub left: ExpressionNodeId,
@@ -64,7 +65,7 @@ pub struct BinaryOperator {
     pub implementation: NodeId<SubprogramDeclaration>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub enum BinaryOperatorKind {
     #[serde(rename = "and")]
     And,
@@ -149,7 +150,7 @@ pub enum BinaryOperatorKind {
 /// base_name: &function_call
 /// implementation: &function_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SubprogramCall {
     pub prefix: PrefixNodeId,
     pub implementation: NodeId<SubprogramDeclaration>,
@@ -164,7 +165,7 @@ pub struct SubprogramCall {
 /// value: int
 /// literal_origin: &division_operator | &pos_attribute | &multiplication_operator | &succ_attribute | &exponentiation_operator | &pred_attribute | &identity_operator | &leftof_attribute | &low_type_attribute | &physical_int_literal | &low_array_attribute | &type_conversion | &left_array_attribute | &substraction_operator | &addition_operator | &qualified_expression | &left_type_attribute | &rightof_attribute | &right_array_attribute | &high_array_attribute | &modulus_operator | &negation_operator | &attribute_name | &simple_name | &length_array_attribute | &high_type_attribute | &right_type_attribute | &absolute_operator | &remainder_operator | &val_attribute
 /// literal_length: int
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct IntegerLiteral {
     pub value: i64,
 }
@@ -175,7 +176,7 @@ pub struct IntegerLiteral {
 /// type: &floating_subtype_definition | &floating_type_definition
 /// fp_value: "1.234…"
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct FloatingPointLiteral {
     #[serde(rename = "fp_value")]
     pub value: f64,
@@ -187,7 +188,7 @@ pub struct FloatingPointLiteral {
 /// type: &physical_type_definition
 /// literal_length: int
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct PhysicalIntLiteral {
     pub value: i64,
     pub unit_name: NameNodeId,
@@ -199,7 +200,7 @@ subset_declaration!(PhysicalLiteral PhysicalLiteralNodeId {
 });
 
 /// Wrapper expression for literals that are known to overflow their target type.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct OverflowLiteral {
     pub literal_origin: ExpressionNodeId,
 }
@@ -213,7 +214,7 @@ pub struct OverflowLiteral {
 /// type: &physical_type_definition | &floating_subtype_definition | &enumeration_subtype_definition | &floating_type_definition | &enumeration_type_definition | &integer_type_definition | &physical_subtype_definition | &integer_subtype_definition
 /// right_limit: &character_literal | &function_call | &length_array_attribute | &multiplication_operator | &integer_literal | &physical_int_literal | &enumeration_literal | &high_array_attribute | &floating_point_literal | &addition_operator | &simple_name | &substraction_operator | &right_array_attribute
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct RangeExpression {
     pub direction: Direction,
     pub left_limit: ExpressionNodeId,
@@ -228,7 +229,7 @@ pub struct RangeExpression {
 /// aggregate_info: &aggregate_info
 /// determined_aggregate_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Aggregate {
     #[serde(rename = "association_choices")]
     pub associations: Vec<AssociationElementNodeId>,
@@ -247,7 +248,7 @@ pub struct Aggregate {
 /// string_length: int
 /// type: &array_subtype_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct StringLiteral {
     #[serde(rename = "string8_id")]
     pub value: Latin1String,
@@ -265,7 +266,7 @@ pub struct StringLiteral {
 /// subprogram_hash: int
 /// visible_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct EnumerationLiteral {
     pub enum_pos: u32,
     pub identifier: Identifier,
@@ -275,6 +276,25 @@ pub struct EnumerationLiteral {
 #[serde(try_from = "CompactString")]
 pub struct Latin1String {
     characters: SmallVec<[u8; 24]>,
+}
+
+impl Serialize for Latin1String {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let utf8 = if let Ok(string) = str::from_utf8(&self.characters) {
+            Cow::Borrowed(string)
+        } else {
+            Cow::Owned(
+                self.characters
+                    .iter()
+                    .map(|&byte| char::from(byte))
+                    .collect(),
+            )
+        };
+        serializer.serialize_str(&utf8)
+    }
 }
 
 impl Latin1String {

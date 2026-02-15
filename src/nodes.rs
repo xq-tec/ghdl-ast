@@ -6,9 +6,6 @@ use std::hash::Hasher;
 use std::marker::PhantomData;
 use std::num::NonZeroU32;
 
-use serde::Deserialize;
-use serde::Deserializer;
-
 use super::*;
 
 pub(crate) type IdPrimitive = NonZeroU32;
@@ -23,6 +20,15 @@ impl<'de, T> Deserialize<'de> for NodeId<T> {
     {
         let id = IdPrimitive::deserialize(deserializer)?;
         Ok(Self(id, PhantomData))
+    }
+}
+
+impl<T> Serialize for NodeId<T> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.0.serialize(serializer)
     }
 }
 
@@ -168,7 +174,7 @@ macro_rules! node_declaration {
             $variant:ident
         ),+ $(,)?
     ) => {
-        #[derive(Deserialize)]
+        #[derive(Deserialize, Serialize)]
         #[serde(rename_all = "snake_case")]
         pub enum Node {
             $(
@@ -524,6 +530,15 @@ macro_rules! subset_declaration {
             {
                 let id = $crate::nodes::IdPrimitive::deserialize(deserializer)?;
                 Ok(Self(id))
+            }
+        }
+
+        impl ::serde::Serialize for $name_id {
+            fn serialize<S>(&self, serializer: S) -> ::std::result::Result<S::Ok, S::Error>
+            where
+                S: ::serde::Serializer,
+            {
+                self.0.serialize(serializer)
             }
         }
 

@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use super::*;
 
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Deserialize)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Deserialize, Serialize)]
 pub enum Direction {
     #[serde(rename = "to")]
     To,
@@ -20,7 +20,7 @@ impl Direction {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Mode {
     In,
@@ -38,7 +38,7 @@ pub enum Mode {
 /// spec_chain: &attribute_value
 /// attribute_specification: &attribute_specification
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AttributeValue {}
 
 /// ```text
@@ -47,7 +47,7 @@ pub struct AttributeValue {}
 /// identifier: "'?'"
 /// base_name: &enumeration_literal
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct CharacterLiteral {}
 
 /// ```text
@@ -60,7 +60,7 @@ pub struct CharacterLiteral {}
 /// associated_expr: &character_literal | &enumeration_literal | &aggregate | &string_literal8 | &simple_name | &integer_literal
 /// parent: int
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ChoiceByExpression {}
 
 /// ```text
@@ -69,7 +69,7 @@ pub struct ChoiceByExpression {}
 /// implementation: &function_declaration
 /// left: &division_operator | &pos_attribute | &and_operator | &slice_name | &multiplication_operator | &simple_aggregate | &greater_than_operator | &succ_attribute | &exponentiation_operator | &indexed_name | &selected_name | &pred_attribute | &xor_operator | &identity_operator | &or_operator | &left_array_attribute | &physical_int_literal | &floating_point_literal | &low_array_attribute | &qualified_expression | &nand_operator | &addition_operator | &substraction_operator | &character_literal | &active_attribute | &left_type_attribute | &type_conversion | &not_operator | &enumeration_literal | &nor_operator | &modulus_operator | &right_array_attribute | &simple_name | &attribute_name | &negation_operator | &high_array_attribute | &string_literal8 | &function_call | &length_array_attribute | &concatenation_operator | &integer_literal | &selected_element | &inequality_operator | &right_type_attribute | &dereference | &absolute_operator | &remainder_operator
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct EqualityOperator {}
 
 #[derive(Debug)]
@@ -90,6 +90,18 @@ impl IndexList {
         match self {
             IndexList::Items(items) => items,
             IndexList::Others => panic!("expected list of indices, got 'others'"),
+        }
+    }
+}
+
+impl Serialize for IndexList {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            IndexList::Items(items) => items.serialize(serializer),
+            IndexList::Others => serializer.serialize_str("others"),
         }
     }
 }
@@ -149,7 +161,7 @@ impl<'de> Deserialize<'de> for IndexList {
 /// chain: &assertion_statement | &suspend_state_statement | &while_loop_statement | &next_statement | &variable_assignment_statement | &case_statement | &if_statement | &return_statement | &procedure_call_statement | &exit_statement | &simple_signal_assignment_statement | &for_loop_statement
 /// parent: int
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct IfStatement {}
 
 /// ```text
@@ -159,7 +171,7 @@ pub struct IfStatement {}
 /// else_clause: &elsif
 /// covered_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Elsif {}
 
 /// ```text
@@ -168,7 +180,7 @@ pub struct Elsif {}
 /// same_alternative_flag: bool
 /// associated_expr: &character_literal | &simple_aggregate | &enumeration_literal | &negation_operator | &simple_name | &string_literal8 | &aggregate | &indexed_name | &concatenation_operator | &integer_literal | &selected_element | &physical_int_literal | &floating_point_literal | &addition_operator | &physical_fp_literal
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ChoiceByNone {
     #[serde(rename = "associated_expr")]
     pub expression: ExpressionNodeId,
@@ -185,7 +197,7 @@ pub struct ChoiceByNone {
 /// parent: int
 /// suspend_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct CaseStatement {}
 
 /// ```text
@@ -198,7 +210,7 @@ pub struct CaseStatement {}
 /// visible_flag: bool
 /// severity_expression: &simple_name
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AssertionStatement {}
 
 /// ```text
@@ -208,7 +220,7 @@ pub struct AssertionStatement {}
 /// associateds: &[assertion_statement] | &[return_statement] | &[variable_assignment_statement] | &[if_statement] | &[procedure_call_statement] | &[exit_statement] | &[simple_signal_assignment_statement] | &[null_statement]
 /// same_alternative_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ChoiceByOthers {}
 
 /// ```text
@@ -216,15 +228,15 @@ pub struct ChoiceByOthers {}
 /// type: &array_type_definition | &enumeration_type_definition
 /// implementation: &function_declaration
 /// left: &character_literal | &and_operator | &slice_name | &quiet_attribute | &event_attribute | &equality_operator | &enumeration_literal | &greater_than_operator | &not_operator | &simple_name | &less_than_operator | &string_literal8 | &indexed_name | &less_than_or_equal_operator | &greater_than_or_equal_operator | &inequality_operator | &or_operator | &dereference | &qualified_expression
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AndOperator {}
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Attribute {
     pub kind: AttributeKind,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AttributeKind {
     Base,
@@ -289,7 +301,7 @@ pub enum AttributeKind {
 /// type: &array_type_definition | &enumeration_type_definition
 /// right: &string_literal8 | &less_than_or_equal_operator | &slice_name | &indexed_name | &greater_than_or_equal_operator | &and_operator | &inequality_operator | &equality_operator | &greater_than_operator | &enumeration_literal | &dereference | &simple_name | &qualified_expression
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct OrOperator {}
 
 /// ```text
@@ -302,7 +314,7 @@ pub struct OrOperator {}
 /// same_alternative_flag: bool
 /// chain: &choice_by_range | &choice_by_others | &choice_by_expression
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ChoiceByRange {}
 
 /// ```text
@@ -311,7 +323,7 @@ pub struct ChoiceByRange {}
 /// type: &enumeration_type_definition
 /// implementation: &function_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct InequalityOperator {}
 
 /// ```text
@@ -323,7 +335,7 @@ pub struct InequalityOperator {}
 /// covered_flag: bool
 /// visible_flag: bool
 /// is_ref: bool
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ExitStatement {}
 
 /// ```text
@@ -333,7 +345,7 @@ pub struct ExitStatement {}
 /// label: ""
 /// chain: &assertion_statement | &suspend_state_statement | &exit_statement | &return_statement | &variable_assignment_statement | &if_statement
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct NullStatement {}
 
 /// ```text
@@ -342,7 +354,7 @@ pub struct NullStatement {}
 /// right: &physical_fp_literal | &slice_name | &integer_literal | &physical_int_literal | &right_array_attribute | &enumeration_literal | &substraction_operator | &addition_operator | &simple_name | &absolute_operator | &floating_point_literal
 /// left: &division_operator | &length_array_attribute | &slice_name | &integer_literal | &physical_int_literal | &left_array_attribute | &floating_point_literal | &addition_operator | &simple_name | &negation_operator | &substraction_operator
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct LessThanOperator {}
 
 /// ```text
@@ -354,7 +366,7 @@ pub struct LessThanOperator {}
 /// has_identifier_list: bool
 /// subtype_indication: &integer_subtype_definition | &enumeration_subtype_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct IteratorDeclaration {}
 
 /// ```text
@@ -370,7 +382,7 @@ pub struct IteratorDeclaration {}
 /// visible_flag: bool
 /// chain: &assertion_statement | &suspend_state_statement | &case_statement | &return_statement | &variable_assignment_statement | &if_statement | &procedure_call_statement | &simple_signal_assignment_statement | &for_loop_statement
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ForLoopStatement {}
 
 /// ```text
@@ -379,7 +391,7 @@ pub struct ForLoopStatement {}
 /// type: &physical_type_definition | &integer_type_definition | &floating_type_definition
 /// implementation: &function_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct MultiplicationOperator {}
 
 /// ```text
@@ -387,7 +399,7 @@ pub struct MultiplicationOperator {}
 /// type: &floating_subtype_definition | &array_subtype_definition | &record_type_definition | &enumeration_subtype_definition | &enumeration_type_definition | &physical_subtype_definition | &integer_subtype_definition
 /// type_mark: &simple_name
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct QualifiedExpression {}
 
 /// ```text
@@ -396,13 +408,13 @@ pub struct QualifiedExpression {}
 /// right: &dereference | &exponentiation_operator | &function_call | &integer_literal | &physical_int_literal | &floating_point_literal | &substraction_operator | &qualified_expression | &simple_name | &negation_operator
 /// type: &physical_type_definition | &integer_type_definition | &floating_type_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct DivisionOperator {}
 
 /// ```text
 /// type: &access_type_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct NullLiteral {}
 
 /// ```text
@@ -411,7 +423,7 @@ pub struct NullLiteral {}
 /// is_ref: bool
 /// allocator_designated_type: &floating_subtype_definition | &array_subtype_definition | &record_type_definition | &enumeration_subtype_definition | &enumeration_type_definition | &physical_subtype_definition | &integer_subtype_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AllocatorByExpression {}
 
 /// ```text
@@ -423,7 +435,7 @@ pub struct AllocatorByExpression {}
 /// sub_aggregate_info: &aggregate_info
 /// aggr_others_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AggregateInfo {}
 
 /// ```text
@@ -431,7 +443,7 @@ pub struct AggregateInfo {}
 /// operand: &division_operator | &high_type_attribute | &integer_literal | &physical_int_literal | &floating_point_literal | &simple_name | &physical_fp_literal
 /// implementation: &function_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct NegationOperator {}
 
 /// ```text
@@ -439,7 +451,7 @@ pub struct NegationOperator {}
 /// type: &array_type_definition | &enumeration_type_definition
 /// implementation: &function_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct NotOperator {}
 
 /// ```text
@@ -448,7 +460,7 @@ pub struct NotOperator {}
 /// left: &division_operator | &function_call | &slice_name | &integer_literal | &physical_int_literal | &floating_point_literal | &simple_name
 /// right: &character_literal | &slice_name | &integer_literal | &physical_int_literal | &enumeration_literal | &floating_point_literal | &negation_operator | &simple_name | &absolute_operator
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct LessThanOrEqualOperator {}
 
 /// ```text
@@ -458,7 +470,7 @@ pub struct LessThanOrEqualOperator {}
 /// allocator_designated_type: &floating_subtype_definition | &array_subtype_definition | &record_type_definition | &enumeration_subtype_definition | &enumeration_type_definition | &physical_subtype_definition | &integer_subtype_definition
 /// allocator_subtype: &simple_name | &array_subtype_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AllocatorBySubtype {}
 
 /// ```text
@@ -474,7 +486,7 @@ pub struct AllocatorBySubtype {}
 /// exit_flag: bool
 /// next_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct WhileLoopStatement {}
 
 /// ```text
@@ -483,7 +495,7 @@ pub struct WhileLoopStatement {}
 /// implementation: &function_declaration
 /// right: &character_literal | &slice_name | &integer_literal | &right_array_attribute | &physical_int_literal | &substraction_operator | &absolute_operator | &simple_name | &floating_point_literal | &dereference
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct GreaterThanOperator {}
 
 /// ```text
@@ -496,7 +508,7 @@ pub struct GreaterThanOperator {}
 /// has_identifier_list: bool
 /// parent: int
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ElementDeclaration {}
 
 /// ```text
@@ -510,7 +522,7 @@ pub struct ElementDeclaration {}
 /// chain: &function_declaration | &attribute_specification | &procedure_declaration | &object_alias_declaration | &constant_declaration | &anonymous_type_declaration
 /// attribute_value_spec_chain: &attribute_value
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AttributeSpecification {}
 
 /// ```text
@@ -527,7 +539,7 @@ pub struct AttributeSpecification {}
 /// visible_flag: bool
 /// chain: &variable_declaration | &file_declaration | &procedure_declaration | &constant_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct FileDeclaration {}
 
 /// ```text
@@ -536,7 +548,7 @@ pub struct FileDeclaration {}
 /// right: &character_literal | &slice_name | &integer_literal | &physical_int_literal | &enumeration_literal | &floating_point_literal | &absolute_operator | &simple_name
 /// type: &enumeration_type_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct GreaterThanOrEqualOperator {}
 
 /// ```text
@@ -544,7 +556,7 @@ pub struct GreaterThanOrEqualOperator {}
 /// implementation: &function_declaration
 /// type: &physical_type_definition | &enumeration_type_definition | &integer_type_definition | &floating_type_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AbsoluteOperator {}
 
 /// ```text
@@ -553,7 +565,7 @@ pub struct AbsoluteOperator {}
 /// left: &floating_point_literal | &addition_operator | &simple_name | &integer_literal
 /// implementation: &function_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ExponentiationOperator {}
 
 /// ```text
@@ -566,7 +578,7 @@ pub struct ExponentiationOperator {}
 /// in_formal_flag: bool
 /// formal: &simple_name
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AssociationElementByName {
     pub formal: Option<NameNodeId>,
     pub formal_conversion: Option<NodeId<SubprogramCall>>,
@@ -584,7 +596,7 @@ pub struct AssociationElementByName {
 /// type_declarator: &type_declaration
 /// elements_declaration_list: &[element_declaration]
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct RecordTypeDefinition {}
 
 /// ```text
@@ -593,7 +605,7 @@ pub struct RecordTypeDefinition {}
 /// right: &substraction_operator | &simple_name | &integer_literal
 /// type: &integer_type_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct RemainderOperator {}
 
 /// ```text
@@ -608,7 +620,7 @@ pub struct RemainderOperator {}
 /// visible_flag: bool
 /// chain: &variable_declaration | &attribute_declaration | &object_alias_declaration | &constant_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ObjectAliasDeclaration {}
 
 /// ```text
@@ -631,7 +643,7 @@ pub struct ObjectAliasDeclaration {}
 /// parent: int
 /// visible_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SensitizedProcessStatement {
     #[serde(default)]
     pub declarations: Vec<DeclarationNodeId>,
@@ -644,7 +656,7 @@ pub struct SensitizedProcessStatement {
 /// chain: &concurrent_procedure_call_statement | &for_generate_statement | &block_statement | &concurrent_assertion_statement | &component_instantiation_statement | &concurrent_simple_signal_assignment | &process_statement
 /// parent: int
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ConcurrentAssertionStatement {}
 
 /// ```text
@@ -659,7 +671,7 @@ pub struct ConcurrentAssertionStatement {}
 /// label: "a" | "csa" | "" | "c"
 /// has_delay_mechanism: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ConcurrentSimpleSignalAssignment {}
 
 /// ```text
@@ -668,7 +680,7 @@ pub struct ConcurrentSimpleSignalAssignment {}
 /// right: &character_literal | &string_literal8 | &slice_name | &function_call | &indexed_name | &concatenation_operator | &integer_literal | &selected_element | &dereference | &simple_name
 /// type: &array_type_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ConcatenationOperator {}
 
 /// ```text
@@ -683,7 +695,7 @@ pub struct ConcatenationOperator {}
 /// has_component: bool
 /// port_map_aspects: &[association_element_by_name] | &[association_element_open]
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ComponentInstantiationStatement {
     pub instantiated_unit: InstantiatedUnitNodeId,
     #[serde(default)]
@@ -697,7 +709,7 @@ pub struct ComponentInstantiationStatement {
 /// entity_aspect: &entity_aspect_open | &entity_aspect_entity | &entity_aspect_configuration
 /// generic_map_aspects: &[association_element_by_expression] | &[association_element_open]
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct BindingIndication {}
 
 /// ```text
@@ -711,7 +723,7 @@ pub struct BindingIndication {}
 /// generics: &[interface_constant_declaration]
 /// chain: &configuration_specification | &signal_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ComponentDeclaration {
     #[serde(default)]
     pub generics: Vec<NodeId<ConstantDeclaration>>,
@@ -724,7 +736,7 @@ pub struct ComponentDeclaration {
 /// element_type_flag: bool
 /// choice_name: &simple_name
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ChoiceByName {}
 
 /// ```text
@@ -735,14 +747,14 @@ pub struct ChoiceByName {}
 /// declarations: &[use_clause]
 /// prev_block_configuration: &block_configuration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct BlockConfiguration {}
 
 /// ```text
 /// entity_name: &selected_name
 /// architecture: &simple_name
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct EntityAspectEntity {
     pub entity_name: NodeId<SelectedName>,
     pub architecture: Option<NodeId<SimpleName>>,
@@ -757,7 +769,7 @@ pub struct EntityAspectEntity {
 /// instantiation_list: array | &[simple_name]
 /// component_name: &simple_name
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ConfigurationSpecification {}
 
 /// ```text
@@ -770,7 +782,7 @@ pub struct ConfigurationSpecification {}
 /// instantiation_list: &[reference_name] | &[simple_name]
 /// component_name: &reference_name | &simple_name
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ComponentConfiguration {}
 
 /// ```text
@@ -779,7 +791,7 @@ pub struct ComponentConfiguration {}
 /// left: &string_literal8 | &indexed_name | &slice_name | &xor_operator | &simple_name | &qualified_expression
 /// implementation: &function_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct XorOperator {}
 
 /// ```text
@@ -788,7 +800,7 @@ pub struct XorOperator {}
 /// right: &substraction_operator | &simple_name | &integer_literal
 /// implementation: &function_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ModulusOperator {}
 
 /// ```text
@@ -797,7 +809,7 @@ pub struct ModulusOperator {}
 /// left: &string_literal8 | &indexed_name | &slice_name | &simple_name | &qualified_expression
 /// right: &string_literal8 | &indexed_name | &slice_name | &simple_name | &qualified_expression
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct NandOperator {}
 
 /// ```text
@@ -806,7 +818,7 @@ pub struct NandOperator {}
 /// left: &string_literal8 | &indexed_name | &slice_name | &simple_name | &qualified_expression
 /// implementation: &function_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct NorOperator {}
 
 /// ```text
@@ -824,13 +836,13 @@ pub struct NorOperator {}
 /// chain: &for_generate_statement | &block_statement | &sensitized_process_statement | &process_statement
 /// block_header: &block_header
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct BlockStatement {}
 
 /// ```text
 /// configuration_name: &simple_name | &selected_name
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct EntityAspectConfiguration {}
 
 /// ```text
@@ -838,14 +850,14 @@ pub struct EntityAspectConfiguration {}
 /// operand: &physical_int_literal | &floating_point_literal | &simple_name | &integer_literal
 /// type: &physical_type_definition | &enumeration_type_definition | &integer_type_definition | &floating_type_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct IdentityOperator {}
 
 /// ```text
 /// referenced_name: &simple_name
 /// named_entity: &component_declaration | &component_instantiation_statement
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ReferenceName {}
 
 /// ```text
@@ -854,7 +866,7 @@ pub struct ReferenceName {}
 /// fp_value: "1.234…"
 /// literal_length: int
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct PhysicalFpLiteral {}
 
 /// ```text
@@ -869,7 +881,7 @@ pub struct PhysicalFpLiteral {}
 /// type_declarator: &subtype_declaration
 /// signal_type_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct RecordSubtypeDefinition {}
 
 /// ```text
@@ -878,7 +890,7 @@ pub struct RecordSubtypeDefinition {}
 /// type: &array_subtype_definition
 /// literal_subtype: &array_subtype_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SimpleAggregate {}
 
 /// ```text
@@ -886,7 +898,7 @@ pub struct SimpleAggregate {}
 /// expression: &function_call | &floating_point_literal | &simple_name | &integer_literal
 /// type_mark: &simple_name
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct TypeConversion {}
 
 /// ```text
@@ -897,12 +909,12 @@ pub struct TypeConversion {}
 /// whole_association_flag: bool
 /// formal: &simple_name
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AssociationElementOpen {
     pub formal: Option<NameNodeId>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AssociationElementPackage {}
 
 /// ```text
@@ -913,7 +925,7 @@ pub struct AssociationElementPackage {}
 /// alternative_label: ""
 /// parent: int
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct GenerateStatementBody {}
 
 /// ```text
@@ -922,7 +934,7 @@ pub struct GenerateStatementBody {}
 /// generic_map_aspects: &[association_element_by_expression] | &[association_element_open]
 /// generics: &[interface_constant_declaration]
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct BlockHeader {}
 
 /// ```text
@@ -935,7 +947,7 @@ pub struct BlockHeader {}
 /// parameter_specification: &iterator_declaration
 /// visible_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ForGenerateStatement {}
 
 /// ```text
@@ -947,14 +959,14 @@ pub struct ForGenerateStatement {}
 /// postponed_flag: bool
 /// parent: int
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ConcurrentProcedureCallStatement {}
 
 /// ```text
 /// is_ref: bool
 /// chain: &conditional_waveform
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ConditionalWaveform {}
 
 /// ```text
@@ -967,7 +979,7 @@ pub struct ConditionalWaveform {}
 /// loop_label: &simple_name
 /// chain: &variable_assignment_statement
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct NextStatement {}
 
 /// ```text
@@ -982,7 +994,7 @@ pub struct NextStatement {}
 /// visible_flag: bool
 /// type: &enumeration_type_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct GuardSignalDeclaration {}
 
 /// ```text
@@ -994,7 +1006,7 @@ pub struct GuardSignalDeclaration {}
 /// collapse_signal_flag: bool
 /// chain: &association_element_by_expression
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AssociationElementByIndividual {
     pub formal: Option<NodeId<SimpleName>>,
     pub actual_type: SubtypeDefinitionNodeId,
@@ -1004,7 +1016,7 @@ pub struct AssociationElementByIndividual {
 /// type: &integer_subtype_definition | &array_subtype_definition
 /// expression: &simple_name | &aggregate | &slice_name
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ParenthesisExpression {}
 
 /// ```text
@@ -1018,7 +1030,7 @@ pub struct ParenthesisExpression {}
 /// is_ref: bool
 /// is_within_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct IfGenerateStatement {}
 
 /// ```text
@@ -1033,7 +1045,7 @@ pub struct IfGenerateStatement {}
 /// guarded_target_state: "false"
 /// visible_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ConcurrentSelectedSignalAssignment {}
 
 /// ```text
@@ -1044,14 +1056,14 @@ pub struct ConcurrentSelectedSignalAssignment {}
 /// is_ref: bool
 /// expression: &physical_int_literal
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct DisconnectionSpecification {}
 
 /// ```text
 /// parent: int
 /// attribute_implicit_chain: &stable_attribute | &quiet_attribute
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AttributeImplicitDeclaration {}
 
 /// ```text
@@ -1067,10 +1079,10 @@ pub struct AttributeImplicitDeclaration {}
 /// has_delay_mechanism: bool
 /// visible_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ConcurrentConditionalSignalAssignment {}
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct EntityAspectOpen {}
 
 /// ```text
@@ -1082,7 +1094,7 @@ pub struct EntityAspectOpen {}
 /// subtype_type_mark: &simple_name
 /// designated_type: &floating_subtype_definition | &integer_subtype_definition | &array_subtype_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AccessSubtypeDefinition {}
 
 /// ```text
@@ -1093,7 +1105,7 @@ pub struct AccessSubtypeDefinition {}
 /// has_signal_flag: bool
 /// complete_type_definition: &record_type_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct IncompleteTypeDefinition {}
 
 subset_declaration!(RangeConstraint RangeConstraintNodeId {
@@ -1114,7 +1126,7 @@ subset_declaration!(InstantiatedUnit InstantiatedUnitNodeId {
 /// has_signal_flag: bool
 /// type_declarator: &type_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Error {}
 
 impl Error {
@@ -1122,5 +1134,5 @@ impl Error {
     pub const GLOBAL_ID: NodeId<Self> = NodeId(nodes::IdPrimitive::new(2).unwrap(), PhantomData);
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct OverloadList {}

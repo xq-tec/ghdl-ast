@@ -20,7 +20,7 @@ use super::*;
 /// declarations: &[function_declaration] | &[suspend_state_declaration] | &[subtype_declaration] | &[anonymous_type_declaration] | &[type_declaration] | &[function_body] | &[procedure_body] | &[use_clause] | &[variable_declaration] | &[object_alias_declaration] | &[procedure_declaration] | &[file_declaration] | &[constant_declaration]
 /// seen_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ProcessStatement {
     pub label: Option<Identifier>,
 

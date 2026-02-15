@@ -28,7 +28,7 @@ subset_declaration!(AnonymousTypeDefinition AnonymousTypeDefinitionNodeId {
 /// has_signal_flag: bool
 /// signal_type_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct IntegerTypeDefinition {}
 
 /// ```text
@@ -42,7 +42,7 @@ pub struct IntegerTypeDefinition {}
 /// parent_type: &integer_subtype_definition | &integer_type_definition
 /// resolution_indication: &simple_name
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct IntegerSubtypeDefinition {
     pub range_constraint: NodeId<RangeExpression>,
 }
@@ -54,7 +54,7 @@ pub struct IntegerSubtypeDefinition {
 /// signal_type_flag: bool
 /// type_declarator: &anonymous_type_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct FloatingTypeDefinition {}
 
 /// ```text
@@ -68,7 +68,7 @@ pub struct FloatingTypeDefinition {}
 /// has_signal_flag: bool
 /// signal_type_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct FloatingSubtypeDefinition {
     pub range_constraint: NodeId<RangeExpression>,
 }
@@ -84,7 +84,7 @@ pub struct FloatingSubtypeDefinition {
 /// only_characters_flag: bool
 /// type_declarator: &type_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct EnumerationTypeDefinition {
     pub enumeration_literal_list: Vec<NodeId<EnumerationLiteral>>,
 }
@@ -100,7 +100,7 @@ pub struct EnumerationTypeDefinition {
 /// parent_type: &enumeration_type_definition
 /// is_ref: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct EnumerationSubtypeDefinition {}
 
 /// ```text
@@ -108,7 +108,7 @@ pub struct EnumerationSubtypeDefinition {}
 /// signal_type_flag: bool
 /// resolved_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct WildcardTypeDefinition {}
 
 /// ```text
@@ -120,7 +120,7 @@ pub struct WildcardTypeDefinition {}
 /// is_ref: bool
 /// end_has_reserved_id: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct PhysicalTypeDefinition {
     pub units: Vec<NodeId<UnitDeclaration>>,
 }
@@ -135,7 +135,7 @@ pub struct PhysicalTypeDefinition {
 /// range_constraint: &range_expression
 /// subtype_type_mark: &simple_name
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct PhysicalSubtypeDefinition {
     pub parent_type: NodeId<PhysicalTypeDefinition>,
     pub range_constraint: NodeId<RangeExpression>,
@@ -153,7 +153,7 @@ pub struct PhysicalSubtypeDefinition {
 /// constraint_state: "partially constrained" | "unconstrained"
 /// type_declarator: &anonymous_type_declaration | &type_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ArrayTypeDefinition {
     pub element_subtype: SubtypeDefinitionNodeId,
     #[serde(default)]
@@ -176,7 +176,7 @@ pub struct ArrayTypeDefinition {
 /// index_constraint_flag: bool
 /// has_array_constraint_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ArraySubtypeDefinition {
     pub element_subtype: SubtypeDefinitionNodeId,
     pub index_constraint_list: Vec<SubtypeDefinitionNodeId>,
@@ -189,7 +189,7 @@ pub struct ArraySubtypeDefinition {
 /// type_declarator: &type_declaration
 /// designated_subtype_indication: &simple_name | &array_subtype_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AccessTypeDefinition {}
 
 /// ```text
@@ -199,8 +199,8 @@ pub struct AccessTypeDefinition {}
 /// signal_type_flag: bool
 /// resolved_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct FileTypeDefinition {}
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct FileDefinition {}

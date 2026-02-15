@@ -11,7 +11,7 @@ use super::*;
 /// chain: &library_declaration
 /// design_files: &[design_file]
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Library {
     pub identifier: Identifier,
     #[serde(default)]
@@ -45,7 +45,7 @@ impl Library {
 /// design_units: &[design_unit]
 /// chain: &design_file
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct DesignFile {
     #[serde(default)]
     pub design_units: Vec<NodeId<DesignUnit>>,
@@ -74,7 +74,7 @@ impl DesignFile {
 /// design_file: &design_file
 /// context_items: &[use_clause] | &[library_clause]
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct DesignUnit {
     pub library_unit: LibraryUnitNodeId,
     pub design_file: NodeId<DesignFile>,
@@ -102,14 +102,14 @@ subset_declaration!(LibraryUnit LibraryUnitNodeId {
 /// block_configuration: &block_configuration
 /// visible_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ConfigurationDeclaration {
     pub identifier: Identifier,
     #[serde(rename = "parent")]
     pub design_unit: NodeId<DesignUnit>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ContextDeclaration {
     pub identifier: Identifier,
     #[serde(rename = "parent")]
@@ -130,7 +130,7 @@ pub struct ContextDeclaration {
 /// generics: &[interface_constant_declaration]
 /// attribute_value_chain: &attribute_value
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct EntityDeclaration {
     pub id: NodeId<Self>,
     pub identifier: Identifier,
@@ -157,7 +157,7 @@ pub struct EntityDeclaration {
 /// is_within_flag: bool
 /// package_body: &package_body
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct PackageDeclaration {
     pub id: NodeId<Self>,
 
@@ -168,17 +168,17 @@ pub struct PackageDeclaration {
     pub design_unit: NodeId<DesignUnit>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct PackageInstantiationDeclaration {
     pub identifier: Identifier,
     #[serde(rename = "parent")]
     pub design_unit: NodeId<DesignUnit>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct PackageHeader {}
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct InterfacePackageDeclaration {}
 
 /// ```text
@@ -194,7 +194,7 @@ pub struct InterfacePackageDeclaration {}
 /// concurrent_statements: &[if_generate_statement] | &[for_generate_statement] | &[block_statement] | &[sensitized_process_statement] | &[process_statement] | &[component_instantiation_statement]
 /// macro_expand_flag: bool
 /// ```
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ArchitectureBody {
     pub identifier: Identifier,
     pub entity_name: NodeId<SimpleName>,
@@ -214,7 +214,7 @@ pub struct ArchitectureBody {
 /// package: &package_declaration
 /// identifier: "…"
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct PackageBody {
     pub identifier: Identifier,
     #[serde(rename = "parent")]
@@ -233,7 +233,7 @@ subset_declaration!(ContextItem ContextItemNodeId {
 /// parent: int
 /// has_identifier_list: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct LibraryClause {
     pub identifier: Identifier,
 }
@@ -244,7 +244,7 @@ pub struct LibraryClause {
 /// use_clause_chain: &use_clause
 /// chain: &function_declaration | &variable_declaration | &use_clause | &procedure_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct UseClause {
     pub selected_name: AnySelectedNameNodeId,
 }

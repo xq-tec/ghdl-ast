@@ -26,7 +26,7 @@ subset_declaration!(Declaration DeclarationNodeId {
 /// identifier: "…"
 /// is_ref: bool
 /// parent: int
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SubtypeDeclaration {
     pub identifier: Identifier,
     pub subtype_indication: SubtypeDefinitionNodeId,
@@ -39,7 +39,7 @@ pub struct SubtypeDeclaration {
 /// parent: int
 /// subtype_definition: &floating_subtype_definition | &array_subtype_definition | &physical_subtype_definition | &integer_subtype_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AnonymousTypeDeclaration {
     pub type_definition: AnonymousTypeDefinitionNodeId,
     pub subtype_definition: Option<SubtypeDefinitionNodeId>,
@@ -53,7 +53,7 @@ pub struct AnonymousTypeDeclaration {
 /// incomplete_type_declaration: &type_declaration
 /// type_definition: &record_type_definition | &error | &enumeration_type_definition | &wildcard_type_definition | &access_type_definition | &array_type_definition | &file_type_definition | &incomplete_type_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct TypeDeclaration {
     pub identifier: Identifier,
     pub type_definition: TypeDefinitionNodeId,
@@ -67,7 +67,7 @@ pub struct TypeDeclaration {
 /// identifier: "…"
 /// chain: &function_declaration | &attribute_specification | &attribute_declaration | &signal_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AttributeDeclaration {
     pub identifier: Identifier,
 }
@@ -86,7 +86,7 @@ pub struct AttributeDeclaration {
 /// type: &file_type_definition
 /// parent: int
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct InterfaceFileDeclaration {
     pub identifier: Identifier,
 }
@@ -99,7 +99,7 @@ pub struct InterfaceFileDeclaration {
 /// parent: int
 /// type: &physical_type_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct UnitDeclaration {
     pub physical_literal: PhysicalLiteralNodeId,
 }
@@ -120,7 +120,7 @@ pub struct UnitDeclaration {
 /// mode: "in"
 /// identifier: "…"
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct InterfaceConstantDeclaration {
     pub identifier: Option<Identifier>,
 
@@ -143,7 +143,7 @@ pub struct InterfaceConstantDeclaration {
 /// parent: int
 /// default_value: &string_literal8 | &aggregate | &length_array_attribute | &character_literal | &simple_aggregate | &integer_literal | &physical_int_literal | &enumeration_literal | &concatenation_operator | &floating_point_literal | &simple_name | &attribute_name
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ConstantDeclaration {
     pub identifier: Identifier,
 
@@ -172,7 +172,7 @@ pub struct ConstantDeclaration {
 /// signal_kind: "bus"
 /// guarded_signal_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct InterfaceSignalDeclaration {
     pub identifier: Identifier,
 
@@ -198,7 +198,7 @@ pub struct InterfaceSignalDeclaration {
 /// is_ref: bool
 /// identifier: "…"
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SignalDeclaration {
     pub identifier: Identifier,
 
@@ -236,7 +236,7 @@ pub struct SignalDeclaration {
 /// default_value: &division_operator | &character_literal | &multiplication_operator | &null_literal | &allocator_by_subtype | &enumeration_literal | &allocator_by_expression | &simple_name | &string_literal8 | &aggregate | &function_call | &integer_literal | &physical_int_literal | &floating_point_literal
 /// is_ref: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct VariableDeclaration {
     pub identifier: Identifier,
 
@@ -247,13 +247,13 @@ pub struct VariableDeclaration {
 }
 
 // TODO
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct NonObjectAliasDeclaration {
     pub identifier: Identifier,
 }
 
 // TODO
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Signature {
     #[serde(default, rename = "type_marks_list")]
     pub type_marks: Vec<SubtypeDefinitionNodeId>,
@@ -265,7 +265,7 @@ pub struct Signature {
 /// parent: int
 /// suspend_state_last: &suspend_state_statement
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SuspendStateDeclaration {}
 
 /// ```text
@@ -322,7 +322,7 @@ pub struct SuspendStateDeclaration {}
 /// purity_state: "pure" | "impure" | "maybe_impure" | "unknown"
 /// chain: &subtype_declaration | &function_declaration | &procedure_body | &anonymous_type_declaration | &type_declaration | &variable_declaration | &procedure_declaration | &attribute_specification | &constant_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SubprogramDeclaration {
     pub identifier: Identifier,
     pub implicit_definition: Option<ImplicitDefinition>,
@@ -358,7 +358,7 @@ pub struct SubprogramDeclaration {
 /// subprogram_specification: &function_declaration
 /// end_has_reserved_id: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SubprogramBody {
     pub subprogram_specification: NodeId<SubprogramDeclaration>,
     #[serde(default)]
@@ -367,10 +367,10 @@ pub struct SubprogramBody {
     pub sequential_statements: Vec<SequentialStatementNodeId>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ArrayElementResolution {}
 
-#[derive(Clone, Copy, Debug, Deserialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub enum ImplicitDefinition {
     #[serde(rename = "IIR_PREDEFINED_ACCESS_EQUALITY")]
     AccessEquality,

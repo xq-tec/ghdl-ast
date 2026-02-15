@@ -32,7 +32,7 @@ subset_declaration!(AssociationElement AssociationElementNodeId {
 /// visible_flag: bool
 /// chain: &assertion_statement | &suspend_state_statement | &return_statement | &variable_assignment_statement | &if_statement | &procedure_call_statement | &exit_statement | &simple_signal_assignment_statement | &for_loop_statement
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ProcedureCallStatement {
     pub procedure_call: NodeId<SubprogramCall>,
 }
@@ -48,7 +48,7 @@ pub struct ProcedureCallStatement {
 /// actual_conversion: &function_call
 /// inertial_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AssociationElementByExpression {
     pub formal: Option<NameNodeId>,
     pub actual: ExpressionNodeId,
@@ -64,7 +64,7 @@ pub struct AssociationElementByExpression {
 /// parent: int
 /// covered_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ReportStatement {
     pub report_expression: ExpressionNodeId,
 }
@@ -78,7 +78,7 @@ pub struct ReportStatement {
 /// chain: &variable_assignment_statement | &assertion_statement
 /// expression: &character_literal | &multiplication_operator | &and_operator | &enumeration_literal | &simple_name | &exponentiation_operator | &aggregate | &indexed_name | &function_call | &string_literal8 | &length_array_attribute | &integer_literal | &physical_int_literal | &selected_element | &substraction_operator | &floating_point_literal | &addition_operator | &qualified_expression | &val_attribute
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ReturnStatement {
     pub expression: Option<ExpressionNodeId>,
 }
@@ -96,7 +96,7 @@ pub struct ReturnStatement {
 /// label: ""
 /// target: &selected_element | &indexed_name | &selected_name | &aggregate | &simple_name
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SimpleSignalAssignmentStatement {
     pub target: ExpressionNodeId,
     #[serde(default)]
@@ -111,7 +111,7 @@ pub struct SimpleSignalAssignmentStatement {
 /// suspend_state_chain: &suspend_state_statement
 /// chain: &wait_statement | &procedure_call_statement
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SuspendStateStatement {}
 
 /// ```text
@@ -124,7 +124,7 @@ pub struct SuspendStateStatement {}
 /// label: ""
 /// covered_flag: bool
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct VariableAssignmentStatement {
     pub target: ExpressionNodeId,
     pub expression: ExpressionNodeId,
@@ -141,7 +141,7 @@ pub struct VariableAssignmentStatement {
 /// condition_clause: &or_operator | &equality_operator | &simple_name | &greater_than_or_equal_operator
 /// label: ""
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct WaitStatement {
     #[serde(default)]
     pub sensitivity_list: Vec<ExpressionNodeId>,
@@ -153,7 +153,7 @@ pub struct WaitStatement {
 /// we_value: &nand_operator | &character_literal | &multiplication_operator | &slice_name | &null_literal | &and_operator | &selected_element | &not_operator | &enumeration_literal | &simple_name | &succ_attribute | &less_than_operator | &string_literal8 | &aggregate | &selected_name | &function_call | &indexed_name | &concatenation_operator | &integer_literal | &physical_int_literal | &exponentiation_operator | &type_conversion | &floating_point_literal | &addition_operator | &qualified_expression | &absolute_operator | &substraction_operator
 /// time: &physical_int_literal | &multiplication_operator | &simple_name
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct WaveformElement {
     #[serde(rename = "we_value")]
     pub value: ExpressionNodeId,

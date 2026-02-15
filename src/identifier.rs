@@ -7,6 +7,8 @@ use std::sync::Arc;
 
 use compact_str::CompactString;
 use serde::Deserialize;
+use serde::Serialize;
+use serde::Serializer;
 
 use super::FileMetadata;
 
@@ -18,7 +20,7 @@ pub(super) fn set_file_metadata(metadata: Option<Arc<[FileMetadata]>>) {
     FILES_METADATA.with_borrow_mut(|files| *files = metadata);
 }
 
-#[derive(Clone, PartialEq, Eq, Hash, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct NormalizedIdentifier(pub CompactString);
 
 impl NormalizedIdentifier {
@@ -161,6 +163,21 @@ impl<'de> Deserialize<'de> for Identifier {
             normalized,
             original,
         })
+    }
+}
+
+impl Serialize for Identifier {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        use serde::ser::SerializeTuple;
+        let mut tuple = serializer.serialize_tuple(3)?;
+        // TODO serialize the original identifier directly
+        tuple.serialize_element(&self.normalized)?;
+        tuple.serialize_element(&0_usize)?;
+        tuple.serialize_element(&0_usize)?;
+        tuple.end()
     }
 }
 

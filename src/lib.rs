@@ -27,6 +27,8 @@ use log::debug;
 use log::error;
 use serde::Deserialize;
 use serde::Deserializer;
+use serde::Serialize;
+use serde::Serializer;
 
 pub use self::concurrent_statements::*;
 pub use self::declarations::*;
@@ -46,8 +48,8 @@ pub use self::unsorted::*;
 
 type Map<K, V> = rustc_hash::FxHashMap<K, V>;
 
-#[derive(Debug, Deserialize)]
-#[serde(from = "(u32, u32, u32)")]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(from = "(u32, u32, u32)", into = "(u32, u32, u32)")]
 pub struct Location {
     pub file_name: u32,
     pub line: u32,
@@ -64,7 +66,13 @@ impl From<(u32, u32, u32)> for Location {
     }
 }
 
-#[derive(Debug, Deserialize)]
+impl From<Location> for (u32, u32, u32) {
+    fn from(loc: Location) -> Self {
+        (loc.file_name, loc.line, loc.column)
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 struct AstMetadata {
     #[serde(default)]
     files: Vec<FileMetadata>,
@@ -72,10 +80,13 @@ struct AstMetadata {
     libraries: Vec<NodeId<Library>>,
 }
 
+#[derive(Serialize)]
 struct FileMetadata {
     source: GhdlSource,
     start: usize,
     end: usize,
+
+    #[serde(skip)]
     content: Vec<u8>,
 }
 
@@ -124,7 +135,7 @@ impl fmt::Debug for FileMetadata {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 enum GhdlSource {
     #[serde(rename = "*libraries*")]
     Libraries,

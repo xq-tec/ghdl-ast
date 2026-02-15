@@ -180,7 +180,7 @@ impl Prefix<'_> {
 /// base_name: &attribute_value
 /// named_entity: &attribute_value
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AttributeName {
     pub prefix: PrefixNodeId,
     pub named_entity: NamedEntityNodeId,
@@ -191,7 +191,7 @@ pub struct AttributeName {
 /// type: &floating_subtype_definition | &array_subtype_definition | &record_type_definition | &enumeration_subtype_definition | &enumeration_type_definition | &physical_subtype_definition | &array_type_definition | &integer_subtype_definition
 /// base_name: &dereference
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Dereference {
     pub prefix: PrefixNodeId,
 }
@@ -201,7 +201,7 @@ pub struct Dereference {
 /// base_name: &implicit_dereference
 /// type: &array_subtype_definition | &record_type_definition | &array_type_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ImplicitDereference {
     pub prefix: PrefixNodeId,
 }
@@ -212,7 +212,7 @@ pub struct ImplicitDereference {
 /// type: &floating_subtype_definition | &array_subtype_definition | &record_type_definition | &enumeration_subtype_definition | &enumeration_type_definition | &record_subtype_definition | &physical_subtype_definition | &integer_subtype_definition
 /// base_name: &signal_declaration | &interface_signal_declaration | &function_call | &for_generate_statement | &interface_variable_declaration | &implicit_dereference | &variable_declaration | &object_alias_declaration | &attribute_value | &constant_declaration | &interface_constant_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct IndexedName {
     pub prefix: PrefixNodeId,
     pub index_list: IndexList,
@@ -226,7 +226,7 @@ pub struct IndexedName {
 /// named_entity: &function_declaration | &function_body
 /// type: &enumeration_type_definition
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct OperatorSymbol {}
 
 /// ```text
@@ -236,7 +236,7 @@ pub struct OperatorSymbol {}
 /// named_entity: &element_declaration
 /// prefix: &selected_element | &implicit_dereference | &indexed_name | &function_call | &simple_name | &attribute_name
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SelectedElement {
     pub prefix: PrefixNodeId,
     pub named_entity: NamedEntityNodeId,
@@ -245,7 +245,7 @@ pub struct SelectedElement {
 /// ```text
 /// prefix: &simple_name | &selected_name
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SelectedByAllName {
     pub prefix: PrefixNodeId,
 }
@@ -257,7 +257,7 @@ pub struct SelectedByAllName {
 /// base_name: &signal_declaration | &interface_signal_declaration | &subtype_declaration | &type_declaration | &variable_declaration | &constant_declaration | &iterator_declaration
 /// identifier: "…"
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SelectedName {
     pub identifier: Identifier,
     pub named_entity: NamedEntityNodeId,
@@ -270,7 +270,7 @@ pub struct SelectedName {
 /// identifier: "…"
 /// named_entity: &interface_signal_declaration | &attribute_declaration | &package_declaration | &architecture_body | &configuration_declaration | &object_alias_declaration | &iterator_declaration | &interface_file_declaration | &interface_constant_declaration | &while_loop_statement | &type_declaration | &interface_variable_declaration | &file_declaration | &element_declaration | &for_loop_statement | &process_statement | &enumeration_literal | &variable_declaration | &library_declaration | &constant_declaration | &entity_declaration | &signal_declaration | &component_declaration | &subtype_declaration | &block_statement | &guard_signal_declaration | &function_declaration | &component_instantiation_statement | &procedure_declaration | &generate_statement_body | &unit_declaration
 /// ```
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SimpleName {
     pub identifier: Identifier,
     #[serde(default = "unresolved_named_entity")]
@@ -287,7 +287,7 @@ fn unresolved_named_entity() -> NamedEntityNodeId {
 /// suffix: &range_expression | &range_array_attribute | &reverse_range_array_attribute
 /// type: &array_subtype_definition
 /// base_name: &interface_constant_declaration | &function_call | &implicit_dereference | &variable_declaration | &object_alias_declaration | &attribute_value | &constant_declaration | &signal_declaration
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SliceName {
     pub prefix: PrefixNodeId,
     pub suffix: RangeConstraintNodeId,
