@@ -14,17 +14,14 @@ mod unsorted;
 
 use std::env;
 use std::fmt;
-use std::fs;
 use std::io::BufRead;
 use std::path::PathBuf;
-use std::sync::Arc;
 
 use anyhow::Context as _;
 use anyhow::Result;
 use anyhow::bail;
 use compact_str::CompactString;
 use log::debug;
-use log::error;
 use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
@@ -80,47 +77,11 @@ struct AstMetadata {
     libraries: Vec<NodeId<Library>>,
 }
 
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize)]
 struct FileMetadata {
     source: GhdlSource,
     start: usize,
     end: usize,
-
-    #[serde(skip)]
-    content: Vec<u8>,
-}
-
-impl<'de> Deserialize<'de> for FileMetadata {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        #[derive(Deserialize)]
-        struct Helper {
-            source: GhdlSource,
-            start: usize,
-            end: usize,
-        }
-
-        let helper = Helper::deserialize(deserializer)?;
-        let content = if let GhdlSource::File(path) = &helper.source {
-            fs::read(path).unwrap_or_else(|error| {
-                error!(
-                    "failed to read source file {path}: {error}",
-                    path = path.display(),
-                );
-                vec![]
-            })
-        } else {
-            vec![]
-        };
-        Ok(Self {
-            source: helper.source,
-            start: helper.start,
-            end: helper.end,
-            content,
-        })
-    }
 }
 
 impl fmt::Debug for FileMetadata {
@@ -173,9 +134,6 @@ impl Ast {
         let metadata: AstMetadata =
             serde_json::from_str(&line_buffer).context("could not parse AST metadata")?;
         debug!("AST metadata: {metadata:#?}");
-        let files_metadata = Arc::<[FileMetadata]>::from(metadata.files);
-        identifier::set_file_metadata(Some(files_metadata));
-
         let mut nodes = vec![Node::Empty, Node::Empty];
         loop {
             line_number += 1;
@@ -216,8 +174,6 @@ impl Ast {
             Error::GLOBAL_ID.try_get(&instance).is_ok(),
             "sanity check for global error node failed",
         );
-
-        identifier::set_file_metadata(None);
 
         Ok(instance)
     }

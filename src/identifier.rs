@@ -1,24 +1,12 @@
 use std::borrow::Borrow;
-use std::cell::RefCell;
 use std::fmt;
 use std::hash;
 use std::ops::Deref;
-use std::sync::Arc;
 
 use compact_str::CompactString;
 use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
-
-use super::FileMetadata;
-
-thread_local! {
-    static FILES_METADATA: RefCell<Option<Arc<[FileMetadata]>>> = const { RefCell::new(None) };
-}
-
-pub(super) fn set_file_metadata(metadata: Option<Arc<[FileMetadata]>>) {
-    FILES_METADATA.with_borrow_mut(|files| *files = metadata);
-}
 
 #[derive(Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct NormalizedIdentifier(pub CompactString);
@@ -128,37 +116,10 @@ impl<'de> Deserialize<'de> for Identifier {
     where
         D: serde::Deserializer<'de>,
     {
-        fn lookup(
-            files: Option<&[FileMetadata]>,
-            offset: usize,
-            length: usize,
-            capacity: usize,
-        ) -> Option<CompactString> {
-            for file in files? {
-                if file.start <= offset && offset < file.end {
-                    let pos = offset - file.start;
-                    let latin1 = file.content.get(pos..pos + length)?;
-                    let mut original = CompactString::with_capacity(capacity);
-                    original.extend(latin1.iter().map(|&byte| char::from(byte)));
-                    return Some(original);
-                }
-            }
-            None
-        }
-
         #[derive(Deserialize)]
-        struct Helper(NormalizedIdentifier, usize, usize);
+        struct Helper(NormalizedIdentifier, Option<CompactString>);
 
-        let Helper(normalized, offset, length) = Helper::deserialize(deserializer)?;
-        let original = if is_regular(&normalized) {
-            FILES_METADATA
-                .with_borrow(|files| lookup(files.as_deref(), offset, length, normalized.len()))
-        } else {
-            // Don't look up extended identifiers and character literals, as their normalized
-            // representation is equal to their original
-            None
-        };
-
+        let Helper(normalized, original) = Helper::deserialize(deserializer)?;
         Ok(Self {
             normalized,
             original,
@@ -172,11 +133,9 @@ impl Serialize for Identifier {
         S: Serializer,
     {
         use serde::ser::SerializeTuple;
-        let mut tuple = serializer.serialize_tuple(3)?;
-        // TODO serialize the original identifier directly
+        let mut tuple = serializer.serialize_tuple(2)?;
         tuple.serialize_element(&self.normalized)?;
-        tuple.serialize_element(&0_usize)?;
-        tuple.serialize_element(&0_usize)?;
+        tuple.serialize_element(&self.original)?;
         tuple.end()
     }
 }
