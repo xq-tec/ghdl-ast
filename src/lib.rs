@@ -222,23 +222,20 @@ impl Ast {
 
         for &library_id in libraries_list {
             let library = library_id.get(self);
-            libraries.insert(library.identifier.normalized().clone(), library_id);
+            libraries.insert(library.identifier.normalized.clone(), library_id);
 
             for (library_unit_id, library_unit) in library.library_units_iter(self) {
                 match library_unit {
                     LibraryUnit::PackageDeclaration(package) => {
                         package_declarations.insert(
-                            (library_id, package.identifier.normalized().clone()),
+                            (library_id, package.identifier.normalized.clone()),
                             library_unit_id.downcast(),
                         );
                     },
 
                     LibraryUnit::EntityDeclaration(entity_declaration) => {
                         entity_declarations.insert(
-                            (
-                                library_id,
-                                entity_declaration.identifier.normalized().clone(),
-                            ),
+                            (library_id, entity_declaration.identifier.normalized.clone()),
                             library_unit_id.downcast(),
                         );
                     },

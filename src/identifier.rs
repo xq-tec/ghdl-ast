@@ -19,7 +19,7 @@ pub(super) fn set_file_metadata(metadata: Option<Arc<[FileMetadata]>>) {
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Deserialize)]
-pub struct NormalizedIdentifier(CompactString);
+pub struct NormalizedIdentifier(pub CompactString);
 
 impl NormalizedIdentifier {
     /// Creates a normalized identifier from a string.
@@ -84,8 +84,8 @@ impl PartialEq<str> for NormalizedIdentifier {
 /// The original representation is restored on a best-effort basis from the original source code.
 #[derive(Clone, Eq)]
 pub struct Identifier {
-    normalized: NormalizedIdentifier,
-    original: Option<CompactString>,
+    pub normalized: NormalizedIdentifier,
+    pub original: Option<CompactString>,
 }
 
 impl Identifier {
@@ -113,11 +113,6 @@ impl Identifier {
             normalized,
             original,
         }
-    }
-
-    #[must_use]
-    pub fn normalized(&self) -> &NormalizedIdentifier {
-        &self.normalized
     }
 
     #[must_use]
@@ -183,7 +178,7 @@ impl fmt::Display for Identifier {
 
 impl PartialEq for Identifier {
     fn eq(&self, other: &Self) -> bool {
-        self.normalized() == other.normalized()
+        self.normalized == other.normalized
     }
 }
 
