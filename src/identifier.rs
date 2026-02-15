@@ -1,0 +1,259 @@
+use std::borrow::Borrow;
+use std::cell::RefCell;
+use std::fmt;
+use std::hash;
+use std::ops::Deref;
+use std::sync::Arc;
+
+use compact_str::CompactString;
+use serde::Deserialize;
+
+use super::FileMetadata;
+
+thread_local! {
+    static FILES_METADATA: RefCell<Option<Arc<[FileMetadata]>>> = const { RefCell::new(None) };
+}
+
+pub(super) fn set_file_metadata(metadata: Option<Arc<[FileMetadata]>>) {
+    FILES_METADATA.with_borrow_mut(|files| *files = metadata);
+}
+
+#[derive(Clone, PartialEq, Eq, Hash, Deserialize)]
+pub struct NormalizedIdentifier(CompactString);
+
+impl NormalizedIdentifier {
+    /// Creates a normalized identifier from a string.
+    #[must_use]
+    pub fn new(identifier: &str) -> Self {
+        if is_regular(identifier) {
+            let mut normalized = CompactString::with_capacity(identifier.len());
+            normalized.extend(identifier.chars().map(to_normalized));
+            Self(normalized)
+        } else {
+            Self(CompactString::new(identifier))
+        }
+    }
+
+    /// Creates an identifier from a normalized, static string.
+    #[must_use]
+    pub fn static_normalized(identifier: &'static str) -> Self {
+        debug_assert!(is_normalized(identifier), "identifier is not normalized");
+        Self(CompactString::const_new(identifier))
+    }
+
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl Deref for NormalizedIdentifier {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        self.0.as_str()
+    }
+}
+
+impl fmt::Display for NormalizedIdentifier {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&self.0, f)
+    }
+}
+
+impl fmt::Debug for NormalizedIdentifier {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Debug::fmt(&self.0, f)
+    }
+}
+
+impl PartialEq<str> for NormalizedIdentifier {
+    fn eq(&self, other: &str) -> bool {
+        debug_assert!(
+            is_normalized(other),
+            "tried comparing normalized identifier with non-normalized string",
+        );
+        self.0 == other
+    }
+}
+
+/// An identifier with a normalized and an original representation.
+///
+/// The normalized representation is used for comparisons and hashing.
+///
+/// The original representation is restored on a best-effort basis from the original source code.
+#[derive(Clone, Eq)]
+pub struct Identifier {
+    normalized: NormalizedIdentifier,
+    original: Option<CompactString>,
+}
+
+impl Identifier {
+    #[must_use]
+    pub fn new(original: &str) -> Self {
+        let normalized = NormalizedIdentifier::new(original);
+        let original = if is_regular(original) {
+            Some(CompactString::new(original))
+        } else {
+            None
+        };
+        Self {
+            normalized,
+            original,
+        }
+    }
+
+    /// Creates an identifier from a normalized, static string.
+    #[must_use]
+    pub fn static_normalized(identifier: &'static str) -> Self {
+        debug_assert!(is_normalized(identifier), "identifier is not normalized",);
+        let normalized = NormalizedIdentifier::static_normalized(identifier);
+        let original = None;
+        Self {
+            normalized,
+            original,
+        }
+    }
+
+    #[must_use]
+    pub fn normalized(&self) -> &NormalizedIdentifier {
+        &self.normalized
+    }
+
+    #[must_use]
+    pub fn original(&self) -> &str {
+        self.original.as_deref().unwrap_or(&self.normalized)
+    }
+}
+
+impl<'de> Deserialize<'de> for Identifier {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        fn lookup(
+            files: Option<&[FileMetadata]>,
+            offset: usize,
+            length: usize,
+            capacity: usize,
+        ) -> Option<CompactString> {
+            for file in files? {
+                if file.start <= offset && offset < file.end {
+                    let pos = offset - file.start;
+                    let latin1 = file.content.get(pos..pos + length)?;
+                    let mut original = CompactString::with_capacity(capacity);
+                    original.extend(latin1.iter().map(|&byte| char::from(byte)));
+                    return Some(original);
+                }
+            }
+            None
+        }
+
+        #[derive(Deserialize)]
+        struct Helper(NormalizedIdentifier, usize, usize);
+
+        let Helper(normalized, offset, length) = Helper::deserialize(deserializer)?;
+        let original = if is_regular(&normalized) {
+            FILES_METADATA
+                .with_borrow(|files| lookup(files.as_deref(), offset, length, normalized.len()))
+        } else {
+            // Don't look up extended identifiers and character literals, as their normalized
+            // representation is equal to their original
+            None
+        };
+
+        Ok(Self {
+            normalized,
+            original,
+        })
+    }
+}
+
+impl fmt::Debug for Identifier {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Debug::fmt(self.original(), f)
+    }
+}
+
+impl fmt::Display for Identifier {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(self.original(), f)
+    }
+}
+
+impl PartialEq for Identifier {
+    fn eq(&self, other: &Self) -> bool {
+        self.normalized() == other.normalized()
+    }
+}
+
+impl hash::Hash for Identifier {
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        self.normalized.hash(state);
+    }
+}
+
+impl Borrow<str> for Identifier {
+    fn borrow(&self) -> &str {
+        &self.normalized
+    }
+}
+
+#[must_use]
+fn to_normalized(ch: char) -> char {
+    if matches!(ch, 'A'..='Z' | 'À'..='Ö' | 'Ø'..='Þ') {
+        char::from_u32(ch as u32 + 0x20).unwrap_or_else(|| unreachable!())
+    } else {
+        ch
+    }
+}
+
+#[must_use]
+fn is_regular(identifier: &str) -> bool {
+    !matches!(identifier.as_bytes().first(), Some(b'\\' | b'\''))
+}
+
+#[must_use]
+fn is_normalized(identifier: &str) -> bool {
+    if is_regular(identifier) {
+        identifier
+            .chars()
+            .all(|char| !matches!(char, 'A'..='Z' | 'À'..='Ö' | 'Ø'..='Þ'))
+    } else {
+        true
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_to_normalized() {
+        // Check all latin-1 characters
+        for ch in '\u{00}'..='\u{ff}' {
+            assert_eq!(to_normalized(ch).to_string(), ch.to_lowercase().to_string());
+        }
+    }
+
+    #[test]
+    fn test_identifier_new() {
+        #[track_caller]
+        fn check(original: &str, normalized: &str) {
+            assert_eq!(&*NormalizedIdentifier::new(original), normalized);
+        }
+
+        // Character literals
+        check("'z'", "'z'");
+        check("'A'", "'A'");
+        check("'Ö'", "'Ö'");
+
+        // Extended identifiers
+        check("\\ABCdefÄÖÜäöü\\", "\\ABCdefÄÖÜäöü\\");
+
+        // Regular identifiers
+        check("abc", "abc");
+        check("aBc", "abc");
+        check("abcÜ", "abcü");
+    }
+}
