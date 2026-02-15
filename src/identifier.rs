@@ -106,8 +106,8 @@ impl Identifier {
     }
 
     #[must_use]
-    pub fn original(&self) -> &str {
-        self.original.as_deref().unwrap_or(&self.normalized)
+    pub fn original(&self) -> &CompactString {
+        self.original.as_ref().unwrap_or(&self.normalized.0)
     }
 }
 

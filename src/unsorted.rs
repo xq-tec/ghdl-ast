@@ -697,6 +697,7 @@ pub struct ConcatenationOperator {}
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ComponentInstantiationStatement {
+    pub label: Identifier,
     pub instantiated_unit: InstantiatedUnitNodeId,
     #[serde(default)]
     pub generic_map_aspects: Vec<AssociationElementNodeId>,
