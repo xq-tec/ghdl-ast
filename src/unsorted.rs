@@ -233,6 +233,7 @@ pub struct AndOperator {}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Attribute {
+    pub prefix: PrefixNodeId,
     pub kind: AttributeKind,
 }
 
@@ -293,6 +294,70 @@ pub enum AttributeKind {
     AscendingArray,
     RangeArray,
     ReverseRangeArray,
+}
+
+impl fmt::Display for AttributeKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use AttributeKind::*;
+        #[expect(clippy::match_same_arms, reason = "clearer this way")]
+        let attribute_name = match self {
+            Base => "BASE",
+            Subtype => "SUBTYPE",
+            Element => "ELEMENT",
+            Across => "ACROSS",
+            Through => "THROUGH",
+            NatureReference => "REFERENCE",
+            LeftType => "LEFT",
+            RightType => "RIGHT",
+            HighType => "HIGH",
+            LowType => "LOW",
+            AscendingType => "ASCENDING",
+            Image => "IMAGE",
+            Value => "VALUE",
+            Pos => "POS",
+            Val => "VAL",
+            Succ => "SUCC",
+            Pred => "PRED",
+            Leftof => "LEFTOF",
+            Rightof => "RIGHTOF",
+            SignalSlew => "SLEW",
+            QuantitySlew => "SLEW",
+            Ramp => "RAMP",
+            Zoh => "ZOH",
+            Ltf => "LTF",
+            Ztf => "ZTF",
+            Dot => "DOT",
+            Integ => "INTEG",
+            QuantityDelayed => "DELAYED",
+            Above => "ABOVE",
+            Delayed => "DELAYED",
+            Stable => "STABLE",
+            Quiet => "QUIET",
+            Transaction => "TRANSACTION",
+            Event => "EVENT",
+            Active => "ACTIVE",
+            LastEvent => "LASTE_VENT",
+            LastActive => "LAST_ACTIVE",
+            LastValue => "LAST_VALUE",
+            Driving => "DRIVING",
+            DrivingValue => "DRIVING_VALUE",
+            Behavior => "BEHAVIOR",
+            Structure => "STRUCTURE",
+            SimpleName => "SIMPLE_NAME",
+            InstanceName => "INSTANCE_NAME",
+            PathName => "PATH_NAME",
+            Converse => "CONVERSE",
+            LeftArray => "LEFT",
+            RightArray => "RIGHT",
+            HighArray => "HIGH",
+            LowArray => "LOW",
+            LengthArray => "LENGTH",
+            AscendingArray => "ASCENDING",
+            RangeArray => "RANGE",
+            ReverseRangeArray => "REVERSE_RANGE",
+        };
+        fmt::Display::fmt(attribute_name, f)
+    }
 }
 
 /// ```text
