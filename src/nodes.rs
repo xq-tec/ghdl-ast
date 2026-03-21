@@ -8,7 +8,7 @@ use std::num::NonZeroU32;
 
 use super::*;
 
-pub(crate) type IdPrimitive = NonZeroU32;
+pub type IdPrimitive = NonZeroU32;
 
 #[derive(PartialOrd, Ord)]
 pub struct NodeId<T>(pub(crate) IdPrimitive, pub(crate) PhantomData<T>);
@@ -72,6 +72,12 @@ pub type GenericNodeId = NodeId<Node>;
 
 pub trait AstNodeId: Into<GenericNodeId> {
     type NodeType<'ast>;
+
+    #[must_use]
+    fn to_raw(self) -> IdPrimitive {
+        let id: GenericNodeId = self.into();
+        id.0
+    }
 
     #[track_caller]
     fn get<'ast>(self, ast: &'ast Ast) -> Self::NodeType<'ast>
@@ -146,6 +152,10 @@ pub trait DowncastNodeId<T>: Into<GenericNodeId> {
     fn downcast(self) -> NodeId<T> {
         NodeId(self.into().0, PhantomData)
     }
+}
+
+impl AstNodeId for GenericNodeId {
+    type NodeType<'ast> = Node;
 }
 
 impl<T: 'static> AstNodeId for &NodeId<T>
