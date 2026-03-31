@@ -109,6 +109,11 @@ impl Identifier {
     pub fn original(&self) -> &CompactString {
         self.original.as_ref().unwrap_or(&self.normalized.0)
     }
+
+    #[must_use]
+    pub fn into_original(self) -> CompactString {
+        self.original.unwrap_or(self.normalized.0)
+    }
 }
 
 impl<'de> Deserialize<'de> for Identifier {

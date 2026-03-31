@@ -13,6 +13,13 @@ pub type IdPrimitive = NonZeroU32;
 #[derive(PartialOrd, Ord)]
 pub struct NodeId<T>(pub(crate) IdPrimitive, pub(crate) PhantomData<T>);
 
+impl<T> NodeId<T> {
+    #[must_use]
+    pub fn to_raw(self) -> IdPrimitive {
+        self.0
+    }
+}
+
 impl<'de, T> Deserialize<'de> for NodeId<T> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -30,6 +37,21 @@ impl<T> Serialize for NodeId<T> {
     {
         self.0.serialize(serializer)
     }
+}
+
+/// Deserializes to an optional node ID, where `0` is treated as `None`.
+///
+/// # Errors
+///
+/// Returns an error if deserialization to `u32` fails.
+pub fn deserialize_optional_node_id<'de, D, T>(
+    deserializer: D,
+) -> Result<Option<NodeId<T>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let id = u32::deserialize(deserializer)?;
+    Ok(IdPrimitive::new(id).map(|id| NodeId(id, PhantomData)))
 }
 
 // this manual implementation is required to get rid of the `T: PartialEq` trait bound which a derived implementation would imply
@@ -72,12 +94,6 @@ pub type GenericNodeId = NodeId<Node>;
 
 pub trait AstNodeId: Into<GenericNodeId> {
     type NodeType<'ast>;
-
-    #[must_use]
-    fn to_raw(self) -> IdPrimitive {
-        let id: GenericNodeId = self.into();
-        id.0
-    }
 
     #[track_caller]
     fn get<'ast>(self, ast: &'ast Ast) -> Self::NodeType<'ast>
@@ -231,6 +247,17 @@ macro_rules! node_declaration {
                 }
             }
 
+            impl TryFrom<Node> for $variant {
+                type Error = ();
+
+                fn try_from(value: Node) -> Result<Self, Self::Error> {
+                    match value {
+                        Node::$variant(val) => Ok(val),
+                        _ => Err(()),
+                    }
+                }
+            }
+
             impl From<NodeId<$variant>> for GenericNodeId {
                 fn from(value: NodeId<$variant>) -> Self {
                     Self(value.0, PhantomData)
@@ -244,7 +271,7 @@ macro_rules! node_declaration {
             }
 
             impl ::std::fmt::Debug for NodeId<$variant> {
-                fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+                fn fmt(&self, formatter: &mut ::std::fmt::Formatter<'_>) -> Result<(), ::std::fmt::Error> {
                     write!(
                         formatter,
                         concat!("NodeId<", stringify!($variant), ">({index})"),

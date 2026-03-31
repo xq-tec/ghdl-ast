@@ -40,6 +40,7 @@ pub use self::nodes::DowncastNodeId;
 pub use self::nodes::GenericNodeId;
 pub use self::nodes::Node;
 pub use self::nodes::NodeId;
+pub use self::nodes::deserialize_optional_node_id;
 pub use self::sequential_statements::*;
 pub use self::unsorted::*;
 
