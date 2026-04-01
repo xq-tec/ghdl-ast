@@ -574,7 +574,9 @@ pub struct GreaterThanOperator {}
 /// parent: int
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
-pub struct ElementDeclaration {}
+pub struct ElementDeclaration {
+    pub identifier: Identifier,
+}
 
 /// ```text
 /// parent: int
