@@ -476,6 +476,7 @@ node_declaration! {
     EntityAspectOpen,
     AccessSubtypeDefinition,
     IncompleteTypeDefinition,
+    RecordElementConstraint,
 }
 
 #[macro_export]

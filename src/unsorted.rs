@@ -1182,6 +1182,11 @@ subset_declaration!(RangeConstraint RangeConstraintNodeId {
     Attribute(Attribute),
 });
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct RecordElementConstraint {
+    pub identifier: Identifier,
+}
+
 subset_declaration!(InstantiatedUnit InstantiatedUnitNodeId {
     EntityAspectEntity(EntityAspectEntity),
     SimpleName(SimpleName),
