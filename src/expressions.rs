@@ -178,7 +178,7 @@ pub struct IntegerLiteral {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct FloatingPointLiteral {
-    #[serde(rename = "fp_value")]
+    #[serde(rename = "fp_value", deserialize_with = "deserialize_f64")]
     pub value: f64,
 }
 

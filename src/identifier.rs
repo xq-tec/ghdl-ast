@@ -96,7 +96,7 @@ impl Identifier {
     /// Creates an identifier from a normalized, static string.
     #[must_use]
     pub fn static_normalized(identifier: &'static str) -> Self {
-        debug_assert!(is_normalized(identifier), "identifier is not normalized",);
+        debug_assert!(is_normalized(identifier), "identifier is not normalized");
         let normalized = NormalizedIdentifier::static_normalized(identifier);
         let original = None;
         Self {

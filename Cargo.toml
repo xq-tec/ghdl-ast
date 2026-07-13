@@ -1,6 +1,6 @@
 [package]
 name = "ghdl-ast"
-version = "0.1.0"
+version = "0.2.0"
 description = "Data structures for the GHDL abstract syntax tree (AST)"
 authors = ["xq-Tec GmbH <info@xq-tec.com>"]
 edition = "2024"

@@ -319,3 +319,27 @@ impl Ast {
             .map_or(&[], Vec::as_slice)
     }
 }
+
+/// Deserializes an `f64` which has been encoded as string in the format `#BITS`,
+/// where `BITS` is the **hexadecimal** representation of the raw 64 bits of the `f64` value.
+///
+/// # Errors
+///
+/// Returns `Err(_)` if:
+///
+/// - the input isn't a string, or
+/// - the string doesn't start with `#`, or
+/// - the remainder of the string can't be decoded as a 64-bit hexadecimal unsigned integer.
+pub fn deserialize_f64<'de, D>(deserializer: D) -> Result<f64, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    use serde::de::Error;
+
+    let string_repr = <&str>::deserialize(deserializer)?;
+    let bits_str = string_repr
+        .strip_prefix('#')
+        .ok_or_else(|| D::Error::custom("missing # prefix"))?;
+    let bits = u64::from_str_radix(bits_str, 16).map_err(D::Error::custom)?;
+    Ok(f64::from_bits(bits))
+}
