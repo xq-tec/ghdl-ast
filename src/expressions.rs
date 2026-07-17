@@ -10,25 +10,55 @@ use super::*;
 subset_declaration!(Expression ExpressionNodeId {
     CharacterLiteral(CharacterLiteral),
     IntegerLiteral(IntegerLiteral),
+    FloatingPointLiteral(FloatingPointLiteral),
     PhysicalIntLiteral(PhysicalIntLiteral),
+    PhysicalFpLiteral(PhysicalFpLiteral),
+    NullLiteral(NullLiteral),
     OverflowLiteral(OverflowLiteral),
     StringLiteral(StringLiteral),
+    SimpleAggregate(SimpleAggregate),
 
     Unary(UnaryOperator),
     Binary(BinaryOperator),
-    FunctionCall(SubprogramCall),
+    FunctionCall(FunctionCall),
+    ParenthesisExpression(ParenthesisExpression),
+    QualifiedExpression(QualifiedExpression),
+    TypeConversion(TypeConversion),
 
     Aggregate(Aggregate),
+    AllocatorByExpression(AllocatorByExpression),
+    AllocatorBySubtype(AllocatorBySubtype),
+
     IndexedName(IndexedName),
     SimpleName(SimpleName),
     SliceName(SliceName),
+    SelectedName(SelectedName),
+    SelectedElement(SelectedElement),
+    AttributeName(AttributeName),
+    Attribute(Attribute),
+    Dereference(Dereference),
+    ImplicitDereference(ImplicitDereference),
+});
+
+subset_declaration!(Literal LiteralNodeId {
+    Integer(IntegerLiteral),
+    FloatingPoint(FloatingPointLiteral),
+    Null(NullLiteral),
+    String(StringLiteral),
+    PhysicalInt(PhysicalIntLiteral),
+    PhysicalFp(PhysicalFpLiteral),
+});
+
+subset_declaration!(Allocator AllocatorNodeId {
+    ByExpression(AllocatorByExpression),
+    BySubtype(AllocatorBySubtype),
 });
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UnaryOperator {
     pub kind: UnaryOperatorKind,
     pub operand: ExpressionNodeId,
-    pub implementation: NodeId<SubprogramDeclaration>,
+    pub implementation: FunctionImplementationNodeId,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -62,7 +92,7 @@ pub struct BinaryOperator {
     pub kind: BinaryOperatorKind,
     pub left: ExpressionNodeId,
     pub right: ExpressionNodeId,
-    pub implementation: NodeId<SubprogramDeclaration>,
+    pub implementation: FunctionImplementationNodeId,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -133,70 +163,43 @@ pub enum BinaryOperatorKind {
     Exponentiation,
 }
 
-/// ```text
-/// procedure_call:
-///
-/// implementation: &procedure_declaration
-/// parameter_associations: &[association_element_by_expression] | &[association_element_open] | &[association_element_by_individual]
-/// prefix: &simple_name | &selected_name
-/// ```
-///
-/// ```text
-/// function_call:
-///
-/// prefix: &selected_name | &simple_name | &operator_symbol
-/// type: &floating_subtype_definition | &array_subtype_definition | &record_type_definition | &enumeration_subtype_definition | &enumeration_type_definition | &record_subtype_definition | &physical_subtype_definition | &integer_subtype_definition | &array_type_definition
-/// parameter_associations: &[association_element_by_expression]
-/// base_name: &function_call
-/// implementation: &function_declaration
-/// ```
 #[derive(Debug, Deserialize, Serialize)]
-pub struct SubprogramCall {
+pub struct FunctionCall {
     pub prefix: PrefixNodeId,
-    pub implementation: NodeId<SubprogramDeclaration>,
+    pub implementation: FunctionImplementationNodeId,
     #[serde(default)]
     pub parameter_associations: Vec<AssociationElementNodeId>,
     #[serde(rename = "type")]
-    pub return_type: Option<SubtypeDefinitionNodeId>,
+    pub return_type: SubtypeDefinitionNodeId,
 }
 
-/// ```text
-/// type: &physical_type_definition | &integer_type_definition | &physical_subtype_definition | &integer_subtype_definition
-/// value: int
-/// literal_origin: &division_operator | &pos_attribute | &multiplication_operator | &succ_attribute | &exponentiation_operator | &pred_attribute | &identity_operator | &leftof_attribute | &low_type_attribute | &physical_int_literal | &low_array_attribute | &type_conversion | &left_array_attribute | &substraction_operator | &addition_operator | &qualified_expression | &left_type_attribute | &rightof_attribute | &right_array_attribute | &high_array_attribute | &modulus_operator | &negation_operator | &attribute_name | &simple_name | &length_array_attribute | &high_type_attribute | &right_type_attribute | &absolute_operator | &remainder_operator | &val_attribute
-/// literal_length: int
 #[derive(Debug, Deserialize, Serialize)]
 pub struct IntegerLiteral {
     pub value: i64,
 }
 
-/// ```text
-/// literal_origin: &division_operator | &multiplication_operator | &negation_operator | &simple_name | &attribute_name | &exponentiation_operator | &identity_operator | &high_type_attribute | &low_type_attribute | &right_type_attribute | &type_conversion | &substraction_operator | &absolute_operator | &addition_operator | &left_type_attribute | &qualified_expression
-/// literal_length: int
-/// type: &floating_subtype_definition | &floating_type_definition
-/// fp_value: "1.234…"
-/// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct FloatingPointLiteral {
     #[serde(rename = "fp_value", deserialize_with = "deserialize_f64")]
     pub value: f64,
 }
 
-/// ```text
-/// unit_name: &simple_name
-/// value: int
-/// type: &physical_type_definition
-/// literal_length: int
-/// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PhysicalIntLiteral {
     pub value: i64,
     pub unit_name: NameNodeId,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct PhysicalFpLiteral {
+    #[serde(rename = "fp_value", deserialize_with = "deserialize_f64")]
+    pub value: f64,
+    pub unit_name: NameNodeId,
+}
+
 subset_declaration!(PhysicalLiteral PhysicalLiteralNodeId {
-    Integer(IntegerLiteral),
-    Float(FloatingPointLiteral),
+    PhysicalInt(PhysicalIntLiteral),
+    PhysicalFp(PhysicalFpLiteral),
 });
 
 /// Wrapper expression for literals that are known to overflow their target type.
@@ -205,15 +208,6 @@ pub struct OverflowLiteral {
     pub literal_origin: ExpressionNodeId,
 }
 
-/// ```text
-/// left_limit_expr: &character_literal | &function_call | &length_array_attribute | &integer_literal | &physical_int_literal | &left_array_attribute | &enumeration_literal | &floating_point_literal | &addition_operator | &simple_name | &low_array_attribute
-/// left_limit: &character_literal | &function_call | &length_array_attribute | &integer_literal | &physical_int_literal | &enumeration_literal | &left_array_attribute | &floating_point_literal | &addition_operator | &simple_name | &low_array_attribute
-/// direction: "downto" | "to"
-/// right_limit_expr: &character_literal | &function_call | &length_array_attribute | &multiplication_operator | &integer_literal | &physical_int_literal | &right_array_attribute | &high_array_attribute | &floating_point_literal | &addition_operator | &simple_name | &substraction_operator | &enumeration_literal
-/// range_origin: &range_array_attribute | &simple_name | &reverse_range_array_attribute
-/// type: &physical_type_definition | &floating_subtype_definition | &enumeration_subtype_definition | &floating_type_definition | &enumeration_type_definition | &integer_type_definition | &physical_subtype_definition | &integer_subtype_definition
-/// right_limit: &character_literal | &function_call | &length_array_attribute | &multiplication_operator | &integer_literal | &physical_int_literal | &enumeration_literal | &high_array_attribute | &floating_point_literal | &addition_operator | &simple_name | &substraction_operator | &right_array_attribute
-/// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct RangeExpression {
     pub direction: Direction,
@@ -221,33 +215,14 @@ pub struct RangeExpression {
     pub right_limit: ExpressionNodeId,
 }
 
-/// ```text
-/// literal_subtype: &array_subtype_definition
-/// aggregate_expand_flag: bool
-/// association_choices: &[choice_by_range] | &[choice_by_others] | &[choice_by_expression] | &[choice_by_name] | &[choice_by_none]
-/// type: &array_subtype_definition | &record_subtype_definition | &record_type_definition
-/// aggregate_info: &aggregate_info
-/// determined_aggregate_flag: bool
-/// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Aggregate {
     #[serde(rename = "association_choices")]
-    pub associations: Vec<AssociationElementNodeId>,
+    pub associations: Vec<ChoiceNodeId>,
     #[serde(rename = "type")]
     pub typ: Option<SubtypeDefinitionNodeId>,
 }
 
-/// ```text
-/// literal_subtype: &array_subtype_definition
-/// bit_string_base: "BASE_2" | "BASE_16" | "BASE_NONE" | "BASE_8"
-/// has_length: bool
-/// literal_length: int
-/// has_sign: bool
-/// has_signed: bool
-/// string8_id: "…"
-/// string_length: int
-/// type: &array_subtype_definition
-/// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct StringLiteral {
     #[serde(rename = "string8_id")]
@@ -255,17 +230,6 @@ pub struct StringLiteral {
     pub literal_origin: Option<ExpressionNodeId>,
 }
 
-/// ```text
-/// identifier: "…"
-/// type: &enumeration_type_definition
-/// literal_origin: &and_operator | &not_operator | &equality_operator | &right_array_attribute | &greater_than_operator | &simple_name | &attribute_name | &succ_attribute | &less_than_operator | &pred_attribute | &less_than_or_equal_operator | &leftof_attribute | &high_type_attribute | &low_type_attribute | &inequality_operator | &greater_than_or_equal_operator | &left_array_attribute | &right_type_attribute | &type_conversion | &or_operator | &qualified_expression | &left_type_attribute | &val_attribute
-/// enum_pos: int
-/// is_within_flag: bool
-/// parent: int
-/// seen_flag: bool
-/// subprogram_hash: int
-/// visible_flag: bool
-/// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct EnumerationLiteral {
     pub enum_pos: u32,
@@ -422,6 +386,33 @@ impl fmt::Debug for Latin1Str {
         Ok(())
     }
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CharacterLiteral {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct QualifiedExpression {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct NullLiteral {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct AllocatorByExpression {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct AllocatorBySubtype {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct AggregateInfo {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ParenthesisExpression {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct TypeConversion {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SimpleAggregate {}
 
 #[cfg(test)]
 mod tests {

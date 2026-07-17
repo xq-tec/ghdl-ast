@@ -1,16 +1,28 @@
-#![allow(missing_docs, reason = "// TODO remove before release")]
-#![expect(clippy::todo, reason = "// TODO remove before release")]
+//! Data structures to represent an exported GHDL *abstract syntax tree* (AST).
+//!
+//! **Note:** most of the AST node types are incomplete.
+//!
+//! AI NOTICE: Partially generated, partially reviewed.
 
+#![expect(missing_docs, reason = "// TODO remove before release")]
+
+mod associations;
+mod attributes;
+mod choices;
+mod common;
 mod concurrent_statements;
+mod configuration;
 mod declarations;
-mod definitions;
 mod expressions;
 mod identifier;
 mod libraries;
 mod names;
 mod nodes;
+mod psl;
 mod sequential_statements;
-mod unsorted;
+mod specifications;
+mod types;
+mod waveforms;
 
 use std::env;
 use std::fmt;
@@ -21,15 +33,19 @@ use anyhow::Context as _;
 use anyhow::Result;
 use anyhow::bail;
 use compact_str::CompactString;
-use log::debug;
 use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
 use serde::Serializer;
+use tracing::debug;
 
+pub use self::associations::*;
+pub use self::attributes::*;
+pub use self::choices::*;
+pub use self::common::*;
 pub use self::concurrent_statements::*;
+pub use self::configuration::*;
 pub use self::declarations::*;
-pub use self::definitions::*;
 pub use self::expressions::*;
 pub use self::identifier::Identifier;
 pub use self::identifier::NormalizedIdentifier;
@@ -38,11 +54,16 @@ pub use self::names::*;
 pub use self::nodes::AstNodeId;
 pub use self::nodes::DowncastNodeId;
 pub use self::nodes::GenericNodeId;
+pub use self::nodes::IdPrimitive;
 pub use self::nodes::Node;
 pub use self::nodes::NodeId;
+pub use self::nodes::TryFromNodeError;
 pub use self::nodes::deserialize_optional_node_id;
+pub use self::psl::*;
 pub use self::sequential_statements::*;
-pub use self::unsorted::*;
+pub use self::specifications::*;
+pub use self::types::*;
+pub use self::waveforms::*;
 
 type Map<K, V> = rustc_hash::FxHashMap<K, V>;
 
@@ -72,6 +93,8 @@ impl From<Location> for (u32, u32, u32) {
 
 #[derive(Debug, Deserialize, Serialize)]
 struct AstMetadata {
+    first_id: u32,
+    last_id: u32,
     #[serde(default)]
     files: Vec<FileMetadata>,
     #[serde(default)]
@@ -109,6 +132,11 @@ enum GhdlSource {
     File(PathBuf),
 }
 
+pub struct AstLoadingOutput {
+    pub ast: Ast,
+    pub next_line_number: u32,
+}
+
 #[derive(Debug)]
 pub struct Ast {
     nodes: Vec<Node>,
@@ -128,16 +156,23 @@ impl Ast {
     /// # Errors
     ///
     /// Returns an error if reading from the buffer or parsing the JSON fails.
-    pub fn from_json(reader: &mut dyn BufRead) -> Result<Self> {
-        let mut line_number: u32 = 1;
+    pub fn from_json(
+        reader: &mut dyn BufRead,
+        mut next_line_number: u32,
+    ) -> Result<AstLoadingOutput> {
         let mut line_buffer = String::new();
         reader.read_line(&mut line_buffer)?;
         let metadata: AstMetadata =
             serde_json::from_str(&line_buffer).context("could not parse AST metadata")?;
         debug!("AST metadata: {metadata:#?}");
-        let mut nodes = vec![Node::Empty, Node::Empty];
+
+        let mut nodes = Vec::with_capacity(metadata.last_id as usize + 1);
+        for _ in 0..metadata.first_id {
+            nodes.push(Node::Empty);
+        }
+
         loop {
-            line_number += 1;
+            next_line_number += 1;
             line_buffer.clear();
             reader.read_line(&mut line_buffer)?;
             let line = line_buffer.trim();
@@ -146,7 +181,7 @@ impl Ast {
             }
 
             let node_opt = serde_json::from_str::<Option<Node>>(line)
-                .with_context(|| format!("parse error in line {line_number}: {line}"))?;
+                .with_context(|| format!("parse error in line {next_line_number}: {line}"))?;
             nodes.push(node_opt.unwrap_or(Node::Empty));
         }
 
@@ -163,20 +198,23 @@ impl Ast {
             }
         }
 
-        let mut instance = Self {
+        let mut ast = Self {
             nodes,
             libraries: Map::default(),
             package_declarations: Map::default(),
             entity_declarations: Map::default(),
             architecture_bodies: Map::default(),
         };
-        instance.build_maps(&metadata.libraries);
+        ast.build_maps(&metadata.libraries);
         debug_assert!(
-            Error::GLOBAL_ID.try_get(&instance).is_ok(),
+            Error::GLOBAL_ID.try_get(&ast).is_ok(),
             "sanity check for global error node failed",
         );
 
-        Ok(instance)
+        Ok(AstLoadingOutput {
+            ast,
+            next_line_number,
+        })
     }
 
     fn build_maps(&mut self, libraries_list: &[NodeId<Library>]) {

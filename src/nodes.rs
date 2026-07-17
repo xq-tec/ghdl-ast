@@ -14,6 +14,12 @@ pub type IdPrimitive = NonZeroU32;
 pub struct NodeId<T>(pub(crate) IdPrimitive, pub(crate) PhantomData<T>);
 
 impl<T> NodeId<T> {
+    /// Creates a node ID from a non-zero raw index.
+    #[must_use]
+    pub const fn from_raw(id: IdPrimitive) -> Self {
+        Self(id, PhantomData)
+    }
+
     #[must_use]
     pub fn to_raw(self) -> IdPrimitive {
         self.0
@@ -39,19 +45,24 @@ impl<T> Serialize for NodeId<T> {
     }
 }
 
-/// Deserializes to an optional node ID, where `0` is treated as `None`.
+/// Deserializes to an optional AST node ID, where `0` is treated as `None`.
 ///
 /// # Errors
 ///
 /// Returns an error if deserialization to `u32` fails.
-pub fn deserialize_optional_node_id<'de, D, T>(
-    deserializer: D,
-) -> Result<Option<NodeId<T>>, D::Error>
+pub fn deserialize_optional_node_id<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
 where
     D: Deserializer<'de>,
+    T: From<IdPrimitive>,
 {
     let id = u32::deserialize(deserializer)?;
-    Ok(IdPrimitive::new(id).map(|id| NodeId(id, PhantomData)))
+    Ok(IdPrimitive::new(id).map(T::from))
+}
+
+impl<T> From<IdPrimitive> for NodeId<T> {
+    fn from(id: IdPrimitive) -> Self {
+        Self(id, PhantomData)
+    }
 }
 
 // this manual implementation is required to get rid of the `T: PartialEq` trait bound which a derived implementation would imply
@@ -285,200 +296,289 @@ macro_rules! node_declaration {
 }
 
 node_declaration! {
-    // Libraries, design files, and design units
-    #[serde(rename = "library_declaration")]
-    Library,
-    DesignFile,
-    DesignUnit,
-    ConfigurationDeclaration,
-    ContextDeclaration,
-    EntityDeclaration,
-    PackageDeclaration,
-    PackageInstantiationDeclaration,
-    ArchitectureBody,
-    PackageBody,
+    // Associations
+    AssociationElementByExpression,
+    AssociationElementByIndividual,
+    AssociationElementByName,
+    AssociationElementOpen,
+    AssociationElementPackage,
+    AssociationElementSubprogram,
+    AssociationElementTerminal,
+    AssociationElementType,
 
-    // Context items
-    LibraryClause,
-    UseClause,
+    // Attributes
+    Attribute,
+    AttributeValue,
+
+    // Choices
+    ChoiceByExpression,
+    ChoiceByName,
+    ChoiceByNone,
+    ChoiceByOthers,
+    ChoiceByRange,
+
+    // Common
+    Error,
+    OverloadList,
+
+    // Concurrent Statements
+    BlockStatement,
+    CaseGenerateStatement,
+    ComponentInstantiationStatement,
+    ConcurrentAssertionStatement,
+    ConcurrentBreakStatement,
+    ConcurrentConditionalSignalAssignment,
+    ConcurrentProcedureCallStatement,
+    ConcurrentSelectedSignalAssignment,
+    ConcurrentSimpleSignalAssignment,
+    ForGenerateStatement,
+    GenerateStatementBody,
+    IfGenerateElseClause,
+    IfGenerateStatement,
+    ProcessStatement,
+    SensitizedProcessStatement,
+    SimpleSimultaneousStatement,
+    SimultaneousCaseStatement,
+    SimultaneousElsif,
+    SimultaneousIfStatement,
+    SimultaneousNullStatement,
+    SimultaneousProceduralStatement,
+
+    // Configuration
+    BindingIndication,
+    BlockConfiguration,
+    BlockHeader,
+    ComponentConfiguration,
+    EntityAspectConfiguration,
+    EntityAspectEntity,
+    EntityAspectOpen,
 
     // Declarations
-    UnitDeclaration,
+    AcrossQuantityDeclaration,
+    AnonymousTypeDeclaration,
+    ArrayElementResolution,
+    AttributeDeclaration,
+    AttributeImplicitDeclaration,
+    ComponentDeclaration,
     ConstantDeclaration,
+    ElementDeclaration,
+    FileDeclaration,
+    FreeQuantityDeclaration,
+    FunctionBody,
+    FunctionDeclaration,
+    FunctionInstantiationDeclaration,
+    GroupDeclaration,
+    GroupTemplateDeclaration,
+    GuardSignalDeclaration,
     InterfaceConstantDeclaration,
-    SignalDeclaration,
+    InterfaceFileDeclaration,
+    InterfaceFunctionDeclaration,
+    InterfaceProcedureDeclaration,
+    InterfaceQuantityDeclaration,
     InterfaceSignalDeclaration,
-    #[serde(rename = "variable_declaration", alias = "interface_variable_declaration")]
+    InterfaceTerminalDeclaration,
+    InterfaceTypeDeclaration,
+    InterfaceVariableDeclaration,
+    InterfaceViewDeclaration,
+    IteratorDeclaration,
+    ModeViewDeclaration,
+    NatureDeclaration,
+    NatureElementDeclaration,
+    NoiseQuantityDeclaration,
+    NonObjectAliasDeclaration,
+    ObjectAliasDeclaration,
+    ProcedureBody,
+    ProcedureDeclaration,
+    ProcedureInstantiationDeclaration,
+    SignalDeclaration,
+    Signature,
+    SpectrumQuantityDeclaration,
+    SubnatureDeclaration,
+    SubprogramInstantiationBody,
+    SubtypeDeclaration,
+    SuspendStateDeclaration,
+    TerminalDeclaration,
+    ThroughQuantityDeclaration,
+    TypeDeclaration,
+    UnitDeclaration,
     VariableDeclaration,
 
-    NonObjectAliasDeclaration,
-    Signature,
-
-    // Concurrent statements
-    ProcessStatement,
-
-    // Sequential statements
-    ProcedureCallStatement,
-    ReportStatement,
-    ReturnStatement,
-    SimpleSignalAssignmentStatement,
-    VariableAssignmentStatement,
-    WaitStatement,
-    WaveformElement,
-
     // Expressions
-    UnaryOperator,
+    Aggregate,
+    AggregateInfo,
+    AllocatorByExpression,
+    AllocatorBySubtype,
     BinaryOperator,
-    #[serde(rename = "procedure_call", alias = "function_call")]
-    SubprogramCall,
+    CharacterLiteral,
+    EnumerationLiteral,
     FloatingPointLiteral,
+    FunctionCall,
     IntegerLiteral,
-    PhysicalIntLiteral,
+    NullLiteral,
     OverflowLiteral,
+    ParenthesisExpression,
+    PhysicalFpLiteral,
+    PhysicalIntLiteral,
+    QualifiedExpression,
+    RangeExpression,
+    SimpleAggregate,
     #[serde(rename = "string_literal8")]
     StringLiteral,
-    RangeExpression,
-    Aggregate,
-    AssociationElementByExpression,
-    EnumerationLiteral,
+    TypeConversion,
+    UnaryOperator,
+
+    // Libraries
+    ArchitectureBody,
+    ConfigurationDeclaration,
+    ContextDeclaration,
+    ContextReference,
+    DesignFile,
+    DesignUnit,
+    EntityDeclaration,
+    ForeignModule,
+    InterfacePackageDeclaration,
+    #[serde(rename = "library_declaration")]
+    Library,
+    LibraryClause,
+    PackageBody,
+    PackageDeclaration,
+    PackageHeader,
+    PackageInstantiationBody,
+    PackageInstantiationDeclaration,
+    UseClause,
+    VmodeDeclaration,
+    VpropDeclaration,
+    VunitDeclaration,
 
     // Names
+    AbsolutePathname,
     AttributeName,
+    BoxName,
+    Dereference,
+    ExternalConstantName,
+    ExternalSignalName,
+    ExternalVariableName,
+    ImplicitDereference,
     IndexedName,
+    OperatorSymbol,
+    PackagePathname,
+    ParenthesisName,
+    PathnameElement,
     ReferenceName,
+    RelativePathname,
     SelectedByAllName,
+    SelectedElement,
     SelectedName,
     SimpleName,
     SliceName,
 
-    // Subprograms
-    #[serde(rename = "procedure_declaration", alias = "function_declaration")]
-    SubprogramDeclaration,
-    #[serde(rename = "procedure_body", alias = "function_body")]
-    SubprogramBody,
+    // PSL
+    PslAssertDirective,
+    PslAssumeDirective,
+    PslBooleanParameter,
+    PslCoverDirective,
+    PslDeclaration,
+    PslDefaultClock,
+    PslEndpointDeclaration,
+    PslExpression,
+    PslFell,
+    PslHierarchicalName,
+    PslInheritSpec,
+    PslOnehot,
+    PslOnehot0,
+    PslPrev,
+    PslRestrictDirective,
+    PslRose,
+    PslStable,
+
+    // Sequential Statements
+    AssertionStatement,
+    BreakElement,
+    BreakStatement,
+    CaseStatement,
+    ConditionalSignalAssignmentStatement,
+    ConditionalVariableAssignmentStatement,
+    Elsif,
+    ExitStatement,
+    ForLoopStatement,
+    IfStatement,
+    NextStatement,
+    NullStatement,
+    ProcedureCall,
+    ProcedureCallStatement,
+    ReportStatement,
+    ReturnStatement,
+    SelectedVariableAssignmentStatement,
+    SelectedWaveformAssignmentStatement,
+    SignalForceAssignmentStatement,
+    SignalReleaseAssignmentStatement,
+    SimpleSignalAssignmentStatement,
+    SuspendStateStatement,
+    VariableAssignmentStatement,
+    WaitStatement,
+    WhileLoopStatement,
+
+    // Specifications
+    AttributeSpecification,
+    ConfigurationSpecification,
+    DisconnectionSpecification,
+    EntityClass,
+    StepLimitSpecification,
 
     // Types
-    IntegerTypeDefinition,
-    IntegerSubtypeDefinition,
-    FloatingTypeDefinition,
-    FloatingSubtypeDefinition,
-    ArrayTypeDefinition,
-    ArraySubtypeDefinition,
-    WildcardTypeDefinition,
-    PhysicalTypeDefinition,
-    PhysicalSubtypeDefinition,
-    EnumerationTypeDefinition,
-    EnumerationSubtypeDefinition,
-    AccessTypeDefinition,
-    FileTypeDefinition,
-    FileDefinition,
-
-    TypeDeclaration,
-    AnonymousTypeDeclaration,
-    SubtypeDeclaration,
-
-    // Miscellaneous
-    PackageHeader,
-    InterfacePackageDeclaration,
-    AttributeDeclaration,
-    InterfaceFileDeclaration,
-    SuspendStateStatement,
-    SuspendStateDeclaration,
-    Error,
-    Attribute,
-    AttributeValue,
-    ArrayElementResolution,
-    OverloadList,
-
-    CharacterLiteral,
-    ChoiceByExpression,
-    ImplicitDereference,
-    EqualityOperator,
-    IfStatement,
-    Elsif,
-    ChoiceByNone,
-    CaseStatement,
-    AssertionStatement,
-    ChoiceByOthers,
-    AndOperator,
-    OrOperator,
-    ChoiceByRange,
-    InequalityOperator,
-    ExitStatement,
-    SelectedElement,
-    NullStatement,
-    Dereference,
-    LessThanOperator,
-    IteratorDeclaration,
-    ForLoopStatement,
-    MultiplicationOperator,
-    QualifiedExpression,
-    DivisionOperator,
-    NullLiteral,
-    AllocatorByExpression,
-    AggregateInfo,
-    NegationOperator,
-    NotOperator,
-    LessThanOrEqualOperator,
-    AllocatorBySubtype,
-    WhileLoopStatement,
-    GreaterThanOperator,
-    ElementDeclaration,
-    AttributeSpecification,
-    FileDeclaration,
-    GreaterThanOrEqualOperator,
-    AbsoluteOperator,
-    ExponentiationOperator,
-    AssociationElementByName,
-    RecordTypeDefinition,
-    RemainderOperator,
-    ObjectAliasDeclaration,
-    SensitizedProcessStatement,
-    ConcurrentAssertionStatement,
-    ConcurrentSimpleSignalAssignment,
-    ConcatenationOperator,
-    ComponentInstantiationStatement,
-    BindingIndication,
-    ComponentDeclaration,
-    ChoiceByName,
-    BlockConfiguration,
-    EntityAspectEntity,
-    ConfigurationSpecification,
-    ComponentConfiguration,
-    XorOperator,
-    ModulusOperator,
-    NandOperator,
-    NorOperator,
-    BlockStatement,
-    EntityAspectConfiguration,
-    IdentityOperator,
-    PhysicalFpLiteral,
-    RecordSubtypeDefinition,
-    SimpleAggregate,
-    TypeConversion,
-    AssociationElementOpen,
-    AssociationElementPackage,
-    GenerateStatementBody,
-    BlockHeader,
-    ForGenerateStatement,
-    ConcurrentProcedureCallStatement,
-    ConditionalWaveform,
-    NextStatement,
-    GuardSignalDeclaration,
-    AssociationElementByIndividual,
-    OperatorSymbol,
-    ParenthesisExpression,
-    IfGenerateStatement,
-    ConcurrentSelectedSignalAssignment,
-    DisconnectionSpecification,
-    AttributeImplicitDeclaration,
-    ConcurrentConditionalSignalAssignment,
-    EntityAspectOpen,
     AccessSubtypeDefinition,
+    AccessTypeDefinition,
+    ArrayModeViewElement,
+    ArrayModeViewIndication,
+    ArrayNatureDefinition,
+    ArraySubnatureDefinition,
+    ArraySubtypeDefinition,
+    ArrayTypeDefinition,
+    EnumerationSubtypeDefinition,
+    EnumerationTypeDefinition,
+    FileDefinition,
+    FileSubtypeDefinition,
+    FileTypeDefinition,
+    FloatingSubtypeDefinition,
+    FloatingTypeDefinition,
+    ForeignVectorTypeDefinition,
     IncompleteTypeDefinition,
+    IntegerSubtypeDefinition,
+    IntegerTypeDefinition,
+    InterfaceTypeDefinition,
+    PhysicalSubtypeDefinition,
+    PhysicalTypeDefinition,
+    ProtectedTypeBody,
+    ProtectedTypeDeclaration,
     RecordElementConstraint,
+    RecordElementResolution,
+    RecordModeViewElement,
+    RecordModeViewIndication,
+    RecordNatureDefinition,
+    RecordResolution,
+    RecordSubtypeDefinition,
+    RecordTypeDefinition,
+    ScalarNatureDefinition,
+    SimpleModeViewElement,
+    WildcardTypeDefinition,
+
+    // Waveforms
+    ConditionalExpression,
+    ConditionalWaveform,
+    UnaffectedWaveform,
+    WaveformElement,
 }
 
+/// Declares a typed subset of [`Node`] variants and a corresponding node ID type.
+///
+/// # Example
+///
+/// ```ignore
+/// ghdl_ast::subset_declaration!(MySubset MySubsetNodeId {
+///     SimpleName(SimpleName),
+///     SelectedName(SelectedName),
+/// });
+/// ```
 #[macro_export]
 macro_rules! subset_declaration {
     ( $name:ident $name_id:ident {
@@ -491,19 +591,19 @@ macro_rules! subset_declaration {
         pub enum $name<'ast> {
             $(
                 $(#[$variant_attr])*
-                $variant(&'ast $type),
+                $variant(&'ast $crate::$type),
             )+
         }
 
-        impl<'ast> TryFrom<&'ast $crate::nodes::Node> for $name<'ast> {
-            type Error = $crate::nodes::TryFromNodeError;
+        impl<'ast> ::std::convert::TryFrom<&'ast $crate::Node> for $name<'ast> {
+            type Error = $crate::TryFromNodeError;
 
-            fn try_from(value: &'ast $crate::nodes::Node) -> ::std::result::Result<Self, Self::Error> {
+            fn try_from(value: &'ast $crate::Node) -> ::std::result::Result<Self, Self::Error> {
                 match value {
                     $(
-                        $crate::nodes::Node::$type(inner) => Ok(Self::$variant(inner)),
+                        $crate::Node::$type(inner) => Ok(Self::$variant(inner)),
                     )+
-                    _ => Err($crate::nodes::TryFromNodeError {
+                    _ => Err($crate::TryFromNodeError {
                         actual: value.type_str(),
                         expected: stringify!($name),
                     }),
@@ -512,17 +612,23 @@ macro_rules! subset_declaration {
         }
 
         #[derive(Clone, Copy, Hash, PartialEq, Eq)]
-        pub struct $name_id($crate::nodes::IdPrimitive);
+        pub struct $name_id($crate::IdPrimitive);
 
         impl $name_id {
             #[expect(dead_code, reason = "generated code")]
             #[must_use]
-            pub(crate) fn new(id: $crate::nodes::IdPrimitive) -> Self {
+            pub(crate) fn new(id: $crate::IdPrimitive) -> Self {
                 Self(id)
             }
         }
 
-        impl $crate::nodes::AstNodeId for $name_id {
+        impl ::std::convert::From<$crate::IdPrimitive> for $name_id {
+            fn from(id: $crate::IdPrimitive) -> Self {
+                Self(id)
+            }
+        }
+
+        impl $crate::AstNodeId for $name_id {
             type NodeType<'ast> = $name<'ast>;
         }
 
@@ -543,30 +649,30 @@ macro_rules! subset_declaration {
             }
         }
 
-        impl Default for $name_id {
+        impl ::std::default::Default for $name_id {
             fn default() -> Self {
-                Self($crate::nodes::IdPrimitive::new(1).unwrap_or_else(|| unreachable!()))
+                Self($crate::IdPrimitive::new(1).unwrap_or_else(|| unreachable!()))
             }
         }
 
-        impl From<$name_id> for $crate::nodes::GenericNodeId {
+        impl ::std::convert::From<$name_id> for $crate::GenericNodeId {
             fn from(value: $name_id) -> Self {
-                Self(value.0, ::std::marker::PhantomData)
+                $crate::NodeId::from_raw(value.0)
             }
         }
 
-        impl From<&$name_id> for $crate::nodes::GenericNodeId {
+        impl ::std::convert::From<&$name_id> for $crate::GenericNodeId {
             fn from(value: &$name_id) -> Self {
-                Self(value.0, ::std::marker::PhantomData)
+                $crate::NodeId::from_raw(value.0)
             }
         }
 
         impl<'de> ::serde::Deserialize<'de> for $name_id {
             fn deserialize<D>(deserializer: D) -> ::std::result::Result<Self, D::Error>
             where
-                D: serde::Deserializer<'de>,
+                D: ::serde::Deserializer<'de>,
             {
-                let id = $crate::nodes::IdPrimitive::deserialize(deserializer)?;
+                let id = $crate::IdPrimitive::deserialize(deserializer)?;
                 Ok(Self(id))
             }
         }
@@ -581,17 +687,16 @@ macro_rules! subset_declaration {
         }
 
         $(
-            impl $crate::nodes::DowncastNodeId<$type> for $name_id {}
+            impl $crate::DowncastNodeId<$crate::$type> for $name_id {}
         )+
 
         $(
-            impl From<NodeId<$type>> for $name_id {
-                fn from(value: NodeId<$type>) -> Self {
-                    Self(value.0)
+            impl ::std::convert::From<$crate::NodeId<$crate::$type>> for $name_id {
+                fn from(value: $crate::NodeId<$crate::$type>) -> Self {
+                    Self(value.to_raw())
                 }
             }
         )+
-
     };
 }
 

@@ -6,8 +6,10 @@ subset_declaration!(Declaration DeclarationNodeId {
     Type(TypeDeclaration),
     AnonymousType(AnonymousTypeDeclaration),
 
-    Subprogram(SubprogramDeclaration),
-    SubprogramBody(SubprogramBody),
+    Function(FunctionDeclaration),
+    FunctionBody(FunctionBody),
+    Procedure(ProcedureDeclaration),
+    ProcedureBody(ProcedureBody),
 
     Constant(ConstantDeclaration),
     Signal(SignalDeclaration),
@@ -18,108 +20,92 @@ subset_declaration!(Declaration DeclarationNodeId {
     SuspendState(SuspendStateDeclaration),
 });
 
-/// ```text
-/// chain: &component_declaration | &subtype_declaration | &attribute_declaration | &function_declaration | &anonymous_type_declaration | &type_declaration | &file_declaration | &variable_declaration | &procedure_declaration | &constant_declaration | &signal_declaration
-/// visible_flag: bool
-/// subtype_indication: &floating_subtype_definition | &array_subtype_definition | &enumeration_subtype_definition | &record_subtype_definition | &physical_subtype_definition | &integer_subtype_definition | &access_subtype_definition
-/// type: &floating_subtype_definition | &array_subtype_definition | &enumeration_subtype_definition | &record_subtype_definition | &physical_subtype_definition | &integer_subtype_definition | &access_subtype_definition
-/// identifier: "…"
-/// is_ref: bool
-/// parent: int
+subset_declaration!(InterfaceDeclaration InterfaceDeclarationNodeId {
+    Constant(InterfaceConstantDeclaration),
+    Variable(InterfaceVariableDeclaration),
+    Signal(InterfaceSignalDeclaration),
+    View(InterfaceViewDeclaration),
+    File(InterfaceFileDeclaration),
+    Terminal(InterfaceTerminalDeclaration),
+    Type(InterfaceTypeDeclaration),
+    Package(InterfacePackageDeclaration),
+    Function(InterfaceFunctionDeclaration),
+    Procedure(InterfaceProcedureDeclaration),
+});
+
+subset_declaration!(InterfaceObjectDeclaration InterfaceObjectDeclarationNodeId {
+    Constant(InterfaceConstantDeclaration),
+    Variable(InterfaceVariableDeclaration),
+    Signal(InterfaceSignalDeclaration),
+    View(InterfaceViewDeclaration),
+    File(InterfaceFileDeclaration),
+});
+
+subset_declaration!(ObjectDeclaration ObjectDeclarationNodeId {
+    ObjectAlias(ObjectAliasDeclaration),
+    File(FileDeclaration),
+    GuardSignal(GuardSignalDeclaration),
+    Signal(SignalDeclaration),
+    Variable(VariableDeclaration),
+    Constant(ConstantDeclaration),
+    Iterator(IteratorDeclaration),
+    InterfaceConstant(InterfaceConstantDeclaration),
+    InterfaceVariable(InterfaceVariableDeclaration),
+    InterfaceSignal(InterfaceSignalDeclaration),
+    InterfaceView(InterfaceViewDeclaration),
+    InterfaceFile(InterfaceFileDeclaration),
+});
+
+subset_declaration!(FunctionImplementation FunctionImplementationNodeId {
+    Function(FunctionDeclaration),
+    InterfaceFunction(InterfaceFunctionDeclaration),
+    FunctionInstantiation(FunctionInstantiationDeclaration),
+});
+
+subset_declaration!(ProcedureImplementation ProcedureImplementationNodeId {
+    Procedure(ProcedureDeclaration),
+    InterfaceProcedure(InterfaceProcedureDeclaration),
+    ProcedureInstantiation(ProcedureInstantiationDeclaration),
+});
+
+subset_declaration!(SubprogramBody SubprogramBodyNodeId {
+    Function(FunctionBody),
+    Procedure(ProcedureBody),
+});
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SubtypeDeclaration {
     pub identifier: Identifier,
     pub subtype_indication: SubtypeDefinitionNodeId,
 }
 
-/// ```text
-/// chain: &function_declaration
-/// type_definition: &physical_type_definition | &integer_type_definition | &floating_type_definition | &array_type_definition
-/// identifier: "…"
-/// parent: int
-/// subtype_definition: &floating_subtype_definition | &array_subtype_definition | &physical_subtype_definition | &integer_subtype_definition
-/// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AnonymousTypeDeclaration {
     pub type_definition: AnonymousTypeDefinitionNodeId,
     pub subtype_definition: Option<SubtypeDefinitionNodeId>,
 }
 
-/// ```text
-/// identifier: "…"
-/// chain: &function_declaration | &procedure_declaration | &type_declaration
-/// parent: int
-/// visible_flag: bool
-/// incomplete_type_declaration: &type_declaration
-/// type_definition: &record_type_definition | &error | &enumeration_type_definition | &wildcard_type_definition | &access_type_definition | &array_type_definition | &file_type_definition | &incomplete_type_definition
-/// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TypeDeclaration {
     pub identifier: Identifier,
     pub type_definition: TypeDefinitionNodeId,
 }
 
-/// ```text
-/// visible_flag: bool
-/// type_mark: &simple_name
-/// type: &floating_subtype_definition | &enumeration_subtype_definition | &array_subtype_definition | &record_type_definition | &enumeration_type_definition | &physical_subtype_definition | &array_type_definition | &integer_subtype_definition
-/// parent: int
-/// identifier: "…"
-/// chain: &function_declaration | &attribute_specification | &attribute_declaration | &signal_declaration
-/// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AttributeDeclaration {
     pub identifier: Identifier,
 }
 
-/// ```text
-/// visible_flag: bool
-/// mode: "out" | "in" | "inout"
-/// has_class: bool
-/// identifier: "…"
-/// is_ref: bool
-/// after_drivers_flag: bool
-/// subtype_indication: &simple_name
-/// has_mode: bool
-/// has_identifier_list: bool
-/// chain: &interface_variable_declaration | &interface_constant_declaration
-/// type: &file_type_definition
-/// parent: int
-/// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct InterfaceFileDeclaration {
     pub identifier: Identifier,
 }
 
-/// ```text
-/// identifier: "…"
-/// visible_flag: bool
-/// chain: &unit_declaration
-/// physical_literal: &integer_literal
-/// parent: int
-/// type: &physical_type_definition
-/// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UnitDeclaration {
     pub physical_literal: PhysicalLiteralNodeId,
 }
 
-/// ```text
-/// parent: int
-/// subtype_indication: &simple_name | &array_subtype_definition
-/// is_ref: bool
-/// open_flag: bool
-/// type: &physical_type_definition | &floating_subtype_definition | &array_subtype_definition | &record_type_definition | &enumeration_subtype_definition | &floating_type_definition | &record_subtype_definition | &enumeration_type_definition | &integer_type_definition | &access_type_definition | &array_type_definition | &integer_subtype_definition | &physical_subtype_definition
-/// has_identifier_list: bool
-/// chain: &interface_variable_declaration | &interface_signal_declaration | &interface_constant_declaration
-/// has_class: bool
-/// default_value: &character_literal | &aggregate | &string_literal8 | &integer_literal | &physical_int_literal | &floating_point_literal | &simple_name
-/// has_mode: bool
-/// after_drivers_flag: bool
-/// visible_flag: bool
-/// mode: "in"
-/// identifier: "…"
-/// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct InterfaceConstantDeclaration {
     pub identifier: Option<Identifier>,
@@ -129,20 +115,6 @@ pub struct InterfaceConstantDeclaration {
     // pub source_location: SourceLocation,
 }
 
-/// ```text
-/// subtype_indication: &array_subtype_definition | &selected_name | &simple_name | &integer_subtype_definition
-/// identifier: "…"
-/// type: &floating_subtype_definition | &array_subtype_definition | &record_type_definition | &enumeration_subtype_definition | &enumeration_type_definition | &record_subtype_definition | &physical_subtype_definition | &integer_subtype_definition | &array_type_definition
-/// chain: &component_declaration | &subtype_declaration | &function_declaration | &use_clause | &anonymous_type_declaration | &type_declaration | &variable_declaration | &object_alias_declaration | &procedure_declaration | &attribute_specification | &constant_declaration | &signal_declaration
-/// deferred_declaration_flag: bool
-/// visible_flag: bool
-/// has_identifier_list: bool
-/// elaborated_flag: bool
-/// deferred_declaration: &constant_declaration
-/// is_ref: bool
-/// parent: int
-/// default_value: &string_literal8 | &aggregate | &length_array_attribute | &character_literal | &simple_aggregate | &integer_literal | &physical_int_literal | &enumeration_literal | &concatenation_operator | &floating_point_literal | &simple_name | &attribute_name
-/// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ConstantDeclaration {
     pub identifier: Identifier,
@@ -152,26 +124,6 @@ pub struct ConstantDeclaration {
     // pub source_location: SourceLocation,
 }
 
-/// ```text
-/// after_drivers_flag: bool
-/// has_active_flag: bool
-/// chain: &interface_signal_declaration | &interface_constant_declaration
-/// has_class: bool
-/// parent: int
-/// subtype_indication: &array_subtype_definition | &enumeration_subtype_definition | &simple_name
-/// type: &floating_subtype_definition | &array_subtype_definition | &record_type_definition | &enumeration_subtype_definition | &enumeration_type_definition | &record_subtype_definition | &physical_subtype_definition | &integer_subtype_definition | &array_type_definition
-/// visible_flag: bool
-/// default_value: &string_literal8 | &character_literal | &aggregate | &integer_literal | &physical_int_literal | &floating_point_literal | &simple_name
-/// mode: "in" | "out" | "inout" | "linkage" | "buffer"
-/// has_mode: bool
-/// has_disconnect_flag: bool
-/// identifier: "…"
-/// has_identifier_list: bool
-/// is_ref: bool
-/// open_flag: bool
-/// signal_kind: "bus"
-/// guarded_signal_flag: bool
-/// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct InterfaceSignalDeclaration {
     pub identifier: Identifier,
@@ -182,22 +134,6 @@ pub struct InterfaceSignalDeclaration {
     pub mode: Mode,
 }
 
-/// ```text
-/// parent: int
-/// after_drivers_flag: bool
-/// chain: &attribute_implicit_declaration | &component_declaration | &function_declaration | &attribute_declaration | &configuration_specification | &subtype_declaration | &type_declaration | &disconnection_specification | &attribute_specification | &procedure_declaration | &object_alias_declaration | &constant_declaration | &signal_declaration
-/// guarded_signal_flag: bool
-/// type: &floating_subtype_definition | &array_subtype_definition | &record_type_definition | &enumeration_subtype_definition | &enumeration_type_definition | &record_subtype_definition | &physical_subtype_definition | &integer_subtype_definition
-/// visible_flag: bool
-/// has_disconnect_flag: bool
-/// has_active_flag: bool
-/// has_identifier_list: bool
-/// default_value: &string_literal8 | &character_literal | &aggregate | &identity_operator | &selected_name | &simple_aggregate | &integer_literal | &physical_int_literal | &enumeration_literal | &floating_point_literal | &negation_operator | &simple_name
-/// subtype_indication: &array_subtype_definition | &enumeration_subtype_definition | &selected_name | &simple_name | &integer_subtype_definition
-/// signal_kind: "bus" | "register"
-/// is_ref: bool
-/// identifier: "…"
-/// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SignalDeclaration {
     pub identifier: Identifier,
@@ -206,36 +142,16 @@ pub struct SignalDeclaration {
     pub typ: SubtypeDefinitionNodeId,
 }
 
-/// ```text
-/// interface_variable_declaration:
-///
-/// has_mode: bool
-/// has_class: bool
-/// after_drivers_flag: bool
-/// default_value: &physical_int_literal | &character_literal | &floating_point_literal | &simple_name | &integer_literal
-/// has_identifier_list: bool
-/// parent: int
-/// mode: "in" | "inout" | "out"
-/// identifier: "…"
-/// type: &floating_subtype_definition | &array_subtype_definition | &record_type_definition | &enumeration_subtype_definition | &enumeration_type_definition | &access_type_definition | &array_type_definition | &integer_subtype_definition | &physical_subtype_definition
-/// is_ref: bool
-/// chain: &interface_variable_declaration | &interface_file_declaration | &interface_signal_declaration | &interface_constant_declaration
-/// visible_flag: bool
-/// subtype_indication: &simple_name
-/// ```
-///
-/// ```text
-/// visible_flag: bool
-/// has_identifier_list: bool
-/// identifier: "…"
-/// parent: int
-/// type: &floating_subtype_definition | &array_subtype_definition | &record_type_definition | &enumeration_subtype_definition | &enumeration_type_definition | &record_subtype_definition | &access_type_definition | &integer_subtype_definition | &physical_subtype_definition | &access_subtype_definition
-/// subtype_indication: &array_subtype_definition | &selected_name | &simple_name | &access_subtype_definition
-/// chain: &subtype_declaration | &function_declaration | &anonymous_type_declaration | &type_declaration | &variable_declaration | &procedure_declaration | &object_alias_declaration | &file_declaration | &constant_declaration
-/// shared_flag: bool
-/// default_value: &division_operator | &character_literal | &multiplication_operator | &null_literal | &allocator_by_subtype | &enumeration_literal | &allocator_by_expression | &simple_name | &string_literal8 | &aggregate | &function_call | &integer_literal | &physical_int_literal | &floating_point_literal
-/// is_ref: bool
-/// ```
+#[derive(Debug, Deserialize, Serialize)]
+pub struct InterfaceVariableDeclaration {
+    pub identifier: Identifier,
+
+    #[serde(rename = "type")]
+    pub typ: SubtypeDefinitionNodeId,
+
+    pub default_value: Option<ExpressionNodeId>,
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct VariableDeclaration {
     pub identifier: Identifier,
@@ -259,108 +175,41 @@ pub struct Signature {
     pub type_marks: Vec<SubtypeDefinitionNodeId>,
 }
 
-/// ```text
-/// suspend_state_chain: &suspend_state_statement
-/// chain: &subtype_declaration | &function_declaration | &use_clause | &anonymous_type_declaration | &type_declaration | &variable_declaration | &procedure_declaration | &file_declaration | &constant_declaration
-/// parent: int
-/// suspend_state_last: &suspend_state_statement
-/// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SuspendStateDeclaration {}
 
-/// ```text
-/// procedure_declaration:
-///
-/// wait_state: "unknown"
-/// foreign_flag: bool
-/// has_body: bool
-/// chain: &function_declaration | &subtype_declaration | &attribute_declaration | &anonymous_type_declaration | &function_body | &type_declaration | &variable_declaration | &procedure_declaration | &attribute_specification | &file_declaration | &constant_declaration | &signal_declaration
-/// has_parameter: bool
-/// interface_declarations: &[interface_file_declaration] | &[interface_signal_declaration] | &[interface_constant_declaration]
-/// pure_flag: bool
-/// return_type_mark: &simple_name
-/// subprogram_body: &function_body
-/// implicit_definition: "IIR_PREDEFINED_BIT_NAND" | "IIR_PREDEFINED_BOOLEAN_XOR" | "IIR_PREDEFINED_NOW_FUNCTION" | "IIR_PREDEFINED_BIT_XNOR" | "IIR_PREDEFINED_INTEGER_LESS" | "IIR_PREDEFINED_FOREIGN_TEXTIO_READ_REAL" | "IIR_PREDEFINED_INTEGER_EXP" | "IIR_PREDEFINED_UNIVERSAL_R_I_MUL" | "IIR_PREDEFINED_ARRAY_SLA" | "IIR_PREDEFINED_ARRAY_LESS" | "IIR_PREDEFINED_BIT_XOR" | "IIR_PREDEFINED_PHYSICAL_LESS" | "IIR_PREDEFINED_PHYSICAL_GREATER_EQUAL" | "IIR_PREDEFINED_BOOLEAN_NOR" | "IIR_PREDEFINED_FLOATING_INEQUALITY" | "IIR_PREDEFINED_ARRAY_EQUALITY" | "IIR_PREDEFINED_TF_ARRAY_AND" | "IIR_PREDEFINED_REAL_PHYSICAL_MUL" | "IIR_PREDEFINED_FLOATING_LESS_EQUAL" | "IIR_PREDEFINED_ENUM_LESS_EQUAL" | "IIR_PREDEFINED_RECORD_INEQUALITY" | "IIR_PREDEFINED_TF_ARRAY_XOR" | "IIR_PREDEFINED_INTEGER_ABSOLUTE" | "IIR_PREDEFINED_ENUM_GREATER_EQUAL" | "IIR_PREDEFINED_INTEGER_PLUS" | "IIR_PREDEFINED_FLOATING_EXP" | "IIR_PREDEFINED_PHYSICAL_PHYSICAL_DIV" | "IIR_PREDEFINED_INTEGER_EQUALITY" | "IIR_PREDEFINED_INTEGER_GREATER" | "IIR_PREDEFINED_PHYSICAL_LESS_EQUAL" | "IIR_PREDEFINED_PHYSICAL_MINUS" | "IIR_PREDEFINED_BOOLEAN_NOT" | "IIR_PREDEFINED_PHYSICAL_NEGATION" | "IIR_PREDEFINED_BOOLEAN_AND" | "IIR_PREDEFINED_INTEGER_MOD" | "IIR_PREDEFINED_INTEGER_MUL" | "IIR_PREDEFINED_FLOATING_DIV" | "IIR_PREDEFINED_FLOATING_MUL" | "IIR_PREDEFINED_ARRAY_SRL" | "IIR_PREDEFINED_PHYSICAL_INEQUALITY" | "IIR_PREDEFINED_ENUM_EQUALITY" | "IIR_PREDEFINED_INTEGER_LESS_EQUAL" | "IIR_PREDEFINED_INTEGER_MINUS" | "IIR_PREDEFINED_FLOATING_NEGATION" | "IIR_PREDEFINED_INTEGER_IDENTITY" | "IIR_PREDEFINED_ARRAY_ROR" | "IIR_PREDEFINED_TF_ARRAY_NOT" | "IIR_PREDEFINED_ACCESS_INEQUALITY" | "IIR_PREDEFINED_RECORD_EQUALITY" | "IIR_PREDEFINED_PHYSICAL_GREATER" | "IIR_PREDEFINED_INTEGER_DIV" | "IIR_PREDEFINED_ARRAY_GREATER" | "IIR_PREDEFINED_INTEGER_NEGATION" | "IIR_PREDEFINED_FLOATING_GREATER" | "IIR_PREDEFINED_FLOATING_ABSOLUTE" | "IIR_PREDEFINED_BIT_OR" | "IIR_PREDEFINED_PHYSICAL_PLUS" | "IIR_PREDEFINED_BOOLEAN_OR" | "IIR_PREDEFINED_PHYSICAL_ABSOLUTE" | "IIR_PREDEFINED_PHYSICAL_REAL_MUL" | "IIR_PREDEFINED_ARRAY_ARRAY_CONCAT" | "IIR_PREDEFINED_ARRAY_ELEMENT_CONCAT" | "IIR_PREDEFINED_PHYSICAL_INTEGER_DIV" | "IIR_PREDEFINED_PHYSICAL_IDENTITY" | "IIR_PREDEFINED_BOOLEAN_NAND" | "IIR_PREDEFINED_FLOATING_GREATER_EQUAL" | "IIR_PREDEFINED_INTEGER_PHYSICAL_MUL" | "IIR_PREDEFINED_TF_ARRAY_OR" | "IIR_PREDEFINED_BIT_NOT" | "IIR_PREDEFINED_ARRAY_SLL" | "IIR_PREDEFINED_FLOATING_LESS" | "IIR_PREDEFINED_ARRAY_SRA" | "IIR_PREDEFINED_ENUM_LESS" | "IIR_PREDEFINED_ENDFILE" | "IIR_PREDEFINED_ACCESS_EQUALITY" | "IIR_PREDEFINED_FLOATING_MINUS" | "IIR_PREDEFINED_UNIVERSAL_R_I_DIV" | "IIR_PREDEFINED_FLOATING_IDENTITY" | "IIR_PREDEFINED_UNIVERSAL_I_R_MUL" | "IIR_PREDEFINED_ARRAY_LESS_EQUAL" | "IIR_PREDEFINED_TF_ARRAY_NOR" | "IIR_PREDEFINED_FLOATING_EQUALITY" | "IIR_PREDEFINED_PHYSICAL_REAL_DIV" | "IIR_PREDEFINED_PHYSICAL_INTEGER_MUL" | "IIR_PREDEFINED_ARRAY_GREATER_EQUAL" | "IIR_PREDEFINED_ELEMENT_ELEMENT_CONCAT" | "IIR_PREDEFINED_TF_ARRAY_NAND" | "IIR_PREDEFINED_BIT_NOR" | "IIR_PREDEFINED_BIT_AND" | "IIR_PREDEFINED_INTEGER_GREATER_EQUAL" | "IIR_PREDEFINED_INTEGER_REM" | "IIR_PREDEFINED_ARRAY_ROL" | "IIR_PREDEFINED_INTEGER_INEQUALITY" | "IIR_PREDEFINED_NONE" | "IIR_PREDEFINED_ELEMENT_ARRAY_CONCAT" | "IIR_PREDEFINED_TF_ARRAY_XNOR" | "IIR_PREDEFINED_BOOLEAN_XNOR" | "IIR_PREDEFINED_ARRAY_INEQUALITY" | "IIR_PREDEFINED_ENUM_GREATER" | "IIR_PREDEFINED_PHYSICAL_EQUALITY" | "IIR_PREDEFINED_FLOATING_PLUS" | "IIR_PREDEFINED_ENUM_INEQUALITY"
-/// subprogram_hash: int
-/// is_within_flag: bool
-/// resolution_function_flag: bool
-/// seen_flag: bool
-/// parent: int
-/// hide_implicit_flag: bool
-/// all_sensitized_state: "???" | "no_signal"
-/// subprogram_depth: int
-/// return_type: &physical_type_definition | &floating_subtype_definition | &array_subtype_definition | &record_type_definition | &enumeration_subtype_definition | &floating_type_definition | &enumeration_type_definition | &integer_type_definition | &physical_subtype_definition | &array_type_definition | &integer_subtype_definition | &record_subtype_definition
-/// elaborated_flag: bool
-/// has_pure: bool
-/// identifier: "…"
-/// visible_flag: bool
-/// overload_number: int
-///
-///
-/// procedure_declaration:
-///
-/// subprogram_depth: int
-/// has_body: bool
-/// parent: int
-/// visible_flag: bool
-/// overload_number: int
-/// wait_state: "true" | "unknown" | "false"
-/// all_sensitized_state: "no_signal" | "???"
-/// implicit_definition: "IIR_PREDEFINED_READ_LENGTH" | "IIR_PREDEFINED_FILE_CLOSE" | "IIR_PREDEFINED_WRITE" | "IIR_PREDEFINED_FOREIGN_TEXTIO_WRITE_REAL" | "IIR_PREDEFINED_DEALLOCATE" | "IIR_PREDEFINED_FILE_OPEN_STATUS" | "IIR_PREDEFINED_NONE" | "IIR_PREDEFINED_FOREIGN_UNTRUNCATED_TEXT_READ" | "IIR_PREDEFINED_FILE_OPEN" | "IIR_PREDEFINED_READ"
-/// passive_flag: bool
-/// interface_declarations: &[interface_file_declaration] | &[interface_variable_declaration] | &[interface_signal_declaration] | &[interface_constant_declaration]
-/// elaborated_flag: bool
-/// subprogram_hash: int
-/// suspend_flag: bool
-/// foreign_flag: bool
-/// hide_implicit_flag: bool
-/// has_parameter: bool
-/// identifier: "…"
-/// seen_flag: bool
-/// subprogram_body: &procedure_body
-/// is_within_flag: bool
-/// purity_state: "pure" | "impure" | "maybe_impure" | "unknown"
-/// chain: &subtype_declaration | &function_declaration | &procedure_body | &anonymous_type_declaration | &type_declaration | &variable_declaration | &procedure_declaration | &attribute_specification | &constant_declaration
-/// ```
 #[derive(Debug, Deserialize, Serialize)]
-pub struct SubprogramDeclaration {
+pub struct FunctionDeclaration {
     pub identifier: Identifier,
     pub implicit_definition: Option<ImplicitDefinition>,
     #[serde(default)]
-    pub interface_declarations: Vec<DeclarationNodeId>,
+    pub interface_declarations: Vec<InterfaceDeclarationNodeId>,
     pub return_type: Option<SubtypeDefinitionNodeId>,
-    pub subprogram_body: Option<NodeId<SubprogramBody>>,
+    pub subprogram_body: Option<NodeId<FunctionBody>>,
 }
 
-/// ```text
-/// procedure_body:
-///
-/// sequential_statements: &[assertion_statement] | &[while_loop_statement] | &[return_statement] | &[variable_assignment_statement] | &[case_statement] | &[if_statement] | &[procedure_call_statement] | &[simple_signal_assignment_statement] | &[for_loop_statement] | &[null_statement]
-/// chain: &function_declaration | &procedure_declaration | &variable_declaration | &constant_declaration | &signal_declaration
-/// subprogram_specification: &procedure_declaration
-/// parent: int
-/// impure_depth: int
-/// callees_list: &[procedure_declaration]
-/// end_has_reserved_id: bool
-/// declarations: &[function_declaration] | &[procedure_body] | &[attribute_declaration] | &[suspend_state_declaration] | &[type_declaration] | &[subtype_declaration] | &[use_clause] | &[variable_declaration] | &[object_alias_declaration] | &[procedure_declaration] | &[attribute_specification] | &[constant_declaration] | &[file_declaration]
-/// attribute_value_chain: &attribute_value
-/// suspend_flag: bool
-/// ```
-///
-/// ```text
-/// function_body:
-///
-/// sequential_statements: &[assertion_statement] | &[case_statement] | &[return_statement] | &[while_loop_statement] | &[variable_assignment_statement] | &[if_statement] | &[for_loop_statement] | &[null_statement]
-/// chain: &component_declaration | &function_declaration | &subtype_declaration | &attribute_declaration | &anonymous_type_declaration | &type_declaration | &variable_declaration | &procedure_declaration | &attribute_specification | &constant_declaration | &signal_declaration
-/// declarations: &[function_declaration] | &[subtype_declaration] | &[anonymous_type_declaration] | &[type_declaration] | &[function_body] | &[variable_declaration] | &[constant_declaration]
-/// impure_depth: int
-/// parent: int
-/// subprogram_specification: &function_declaration
-/// end_has_reserved_id: bool
-/// ```
 #[derive(Debug, Deserialize, Serialize)]
-pub struct SubprogramBody {
-    pub subprogram_specification: NodeId<SubprogramDeclaration>,
+pub struct FunctionBody {
+    pub subprogram_specification: NodeId<FunctionDeclaration>,
+    #[serde(default)]
+    pub declarations: Vec<DeclarationNodeId>,
+    #[serde(default)]
+    pub sequential_statements: Vec<SequentialStatementNodeId>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ProcedureDeclaration {
+    pub identifier: Identifier,
+    pub implicit_definition: Option<ImplicitDefinition>,
+    #[serde(default)]
+    pub interface_declarations: Vec<InterfaceDeclarationNodeId>,
+    pub return_type: Option<SubtypeDefinitionNodeId>,
+    pub subprogram_body: Option<NodeId<ProcedureBody>>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ProcedureBody {
+    pub subprogram_specification: NodeId<ProcedureDeclaration>,
     #[serde(default)]
     pub declarations: Vec<DeclarationNodeId>,
     #[serde(default)]
@@ -1889,3 +1738,92 @@ pub enum ImplicitDefinition {
     #[serde(rename = "IIR_PREDEFINED_WRITE")]
     Write,
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ElementDeclaration {
+    pub identifier: Identifier,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct FileDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ObjectAliasDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ComponentDeclaration {
+    #[serde(default)]
+    pub generics: Vec<InterfaceObjectDeclarationNodeId>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct IteratorDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct GuardSignalDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct AttributeImplicitDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct NatureDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SubnatureDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct GroupTemplateDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct GroupDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct NatureElementDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ModeViewDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SubprogramInstantiationBody {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct FunctionInstantiationDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ProcedureInstantiationDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct TerminalDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct FreeQuantityDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SpectrumQuantityDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct NoiseQuantityDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct AcrossQuantityDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ThroughQuantityDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct InterfaceViewDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct InterfaceQuantityDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct InterfaceTerminalDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct InterfaceTypeDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct InterfaceFunctionDeclaration {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct InterfaceProcedureDeclaration {}
