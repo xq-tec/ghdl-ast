@@ -8,8 +8,13 @@ use std::num::NonZeroU32;
 
 use super::*;
 
+/// Non-zero raw AST node index used by all typed node IDs.
 pub type IdPrimitive = NonZeroU32;
 
+/// Typed index into the AST node table.
+///
+/// The type parameter `T` records which node kind this ID is expected to resolve
+/// to. Use [`AstNodeId::get`] / [`AstNodeId::try_get`] to look up the node.
 #[derive(PartialOrd, Ord)]
 pub struct NodeId<T>(pub(crate) IdPrimitive, pub(crate) PhantomData<T>);
 
@@ -20,6 +25,7 @@ impl<T> NodeId<T> {
         Self(id, PhantomData)
     }
 
+    /// Returns the raw non-zero index stored in this ID.
     #[must_use]
     pub fn to_raw(self) -> IdPrimitive {
         self.0
@@ -101,11 +107,19 @@ impl<T> Default for NodeId<T> {
     }
 }
 
+/// Untyped node ID that can refer to any [`Node`] variant.
 pub type GenericNodeId = NodeId<Node>;
 
+/// Looks up an AST node by ID and downcasts it to the expected type.
 pub trait AstNodeId: Into<GenericNodeId> {
+    /// Node type produced by a successful lookup for this ID kind.
     type NodeType<'ast>;
 
+    /// Gets the node of the expected type from the AST.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the node is missing or has the wrong type.
     #[track_caller]
     fn get<'ast>(self, ast: &'ast Ast) -> Self::NodeType<'ast>
     where
@@ -140,18 +154,26 @@ pub trait AstNodeId: Into<GenericNodeId> {
     }
 }
 
+/// Error returned when an AST node lookup fails.
 #[derive(Clone, Copy, Debug, thiserror::Error)]
 pub enum LookupNodeError {
+    /// No node exists at the given ID (or the slot is empty).
     #[error("node #{id} not found in AST; expected {expected}")]
     NotFound {
+        /// Raw node index that was looked up.
         id: IdPrimitive,
+        /// Expected Rust type name.
         expected: &'static str,
     },
 
+    /// A node exists but is not the expected type.
     #[error("node #{id} is of type {actual}; expected {expected}")]
     WrongType {
+        /// Raw node index that was looked up.
         id: IdPrimitive,
+        /// Expected Rust type name.
         expected: &'static str,
+        /// Actual node type name from the AST.
         actual: &'static str,
     },
 }
@@ -175,7 +197,9 @@ impl LookupNodeError {
     }
 }
 
+/// Converts a node ID into a more specific typed [`NodeId`].
 pub trait DowncastNodeId<T>: Into<GenericNodeId> {
+    /// Downcasts this ID to `NodeId<T>` without checking the node kind.
     fn downcast(self) -> NodeId<T> {
         NodeId(self.into().0, PhantomData)
     }
@@ -211,8 +235,10 @@ macro_rules! node_declaration {
             $variant:ident
         ),+ $(,)?
     ) => {
+        /// Typed AST node stored in [`Ast`].
         #[derive(Deserialize, Serialize)]
         #[serde(rename_all = "snake_case")]
+        #[expect(missing_docs, reason = "redundant")]
         pub enum Node {
             $(
                 $($(#[$variant_attr])*)?
@@ -223,6 +249,7 @@ macro_rules! node_declaration {
         }
 
         impl Node {
+            /// Returns a short type name for this node variant.
             #[must_use]
             pub fn type_str(&self) -> &'static str {
                 match self {
@@ -587,7 +614,9 @@ macro_rules! subset_declaration {
             $variant:ident($type:ident)
         ),+ $(,)?
     } ) => {
+        /// Typed subset of [`Node`] variants for a particular AST role.
         #[derive(Clone, Copy, Debug)]
+        #[expect(missing_docs, reason = "redundant")]
         pub enum $name<'ast> {
             $(
                 $(#[$variant_attr])*
@@ -611,6 +640,7 @@ macro_rules! subset_declaration {
             }
         }
 
+        #[doc = concat!("The ID of an AST [`", stringify!($name), "`] node.")]
         #[derive(Clone, Copy, Hash, PartialEq, Eq)]
         pub struct $name_id($crate::IdPrimitive);
 
@@ -700,9 +730,12 @@ macro_rules! subset_declaration {
     };
 }
 
+/// Error returned when converting a [`Node`] into a typed subset fails.
 #[derive(Clone, Copy, Debug, thiserror::Error)]
 #[error("node is of type {actual}; expected {expected}")]
 pub struct TryFromNodeError {
+    /// Actual node type name from the AST.
     pub actual: &'static str,
+    /// Expected subset type name.
     pub expected: &'static str,
 }

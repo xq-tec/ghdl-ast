@@ -8,8 +8,15 @@ use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
 
+/// Case-folded VHDL identifier used for comparisons and hashing.
+///
+/// Regular identifiers are stored in lowercase Latin-1 form; extended identifiers
+/// and character literals keep their original spelling.
 #[derive(Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
-pub struct NormalizedIdentifier(pub CompactString);
+pub struct NormalizedIdentifier(
+    /// Normalized identifier text.
+    pub CompactString,
+);
 
 impl NormalizedIdentifier {
     /// Creates a normalized identifier from a string.
@@ -31,6 +38,7 @@ impl NormalizedIdentifier {
         Self(CompactString::const_new(identifier))
     }
 
+    /// Returns the normalized identifier as a string slice.
     #[must_use]
     pub fn as_str(&self) -> &str {
         &self.0
@@ -74,11 +82,14 @@ impl PartialEq<str> for NormalizedIdentifier {
 /// The original representation is restored on a best-effort basis from the original source code.
 #[derive(Clone, Eq)]
 pub struct Identifier {
+    /// Case-folded form used for equality and hashing.
     pub normalized: NormalizedIdentifier,
+    /// Original spelling from the source, when available.
     pub original: Option<CompactString>,
 }
 
 impl Identifier {
+    /// Creates an identifier from an original source spelling.
     #[must_use]
     pub fn new(original: &str) -> Self {
         let normalized = NormalizedIdentifier::new(original);
@@ -105,11 +116,13 @@ impl Identifier {
         }
     }
 
+    /// Returns the original spelling, or the normalized form if none was stored.
     #[must_use]
     pub fn original(&self) -> &CompactString {
         self.original.as_ref().unwrap_or(&self.normalized.0)
     }
 
+    /// Consumes the identifier and returns the original spelling when present.
     #[must_use]
     pub fn into_original(self) -> CompactString {
         self.original.unwrap_or(self.normalized.0)

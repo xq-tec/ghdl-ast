@@ -1,10 +1,13 @@
-//! Data structures to represent an exported GHDL *abstract syntax tree* (AST).
+//! Data structures for an exported GHDL abstract syntax tree (AST).
 //!
-//! **Note:** most of the AST node types are incomplete.
+//! These types deserialize the JSON produced by GHDL's `ast-to-json` /
+//! `design-to-json` commands ([`ast_export.adb`](https://github.com/ghdl/ghdl)).
+//! Each struct corresponds to a GHDL node kind (`Iir_Kind_*`). Fields that are
+//! only GHDL-internal analysis helpers (pretty-print flags, staticness caches,
+//! hash chains, …) are omitted; fields needed to interpret analyzed VHDL for
+//! elaboration and simulation are retained.
 //!
-//! AI NOTICE: Partially generated, partially reviewed.
-
-#![expect(missing_docs, reason = "// TODO remove before release")]
+//! AI NOTICE: Mostly generated (especially the documentation), minimally reviewed.
 
 mod associations;
 mod attributes;
@@ -67,11 +70,15 @@ pub use self::waveforms::*;
 
 type Map<K, V> = rustc_hash::FxHashMap<K, V>;
 
+/// Source location of an AST node within a GHDL design file.
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 #[serde(from = "(u32, u32, u32)", into = "(u32, u32, u32)")]
 pub struct Location {
+    /// Index of the source file in GHDL's file table.
     pub file_name: u32,
+    /// 1-based line number in that file.
     pub line: u32,
+    /// 1-based column number in that file.
     pub column: u32,
 }
 
@@ -132,11 +139,15 @@ enum GhdlSource {
     File(PathBuf),
 }
 
+/// Result of loading an AST from a JSON stream.
 pub struct AstLoadingOutput {
+    /// Loaded AST.
     pub ast: Ast,
+    /// Next 1-based line number after the last consumed JSONL record.
     pub next_line_number: u32,
 }
 
+/// Analyzed GHDL AST with typed node storage and design-unit lookup maps.
 #[derive(Debug)]
 pub struct Ast {
     nodes: Vec<Node>,
@@ -269,6 +280,7 @@ impl Ast {
         self.architecture_bodies = architecture_bodies;
     }
 
+    /// Looks up a library by its normalized identifier.
     #[must_use]
     pub fn lookup_library(&self, identifier: &NormalizedIdentifier) -> Option<NodeId<Library>> {
         self.libraries.get(identifier).copied()
@@ -294,6 +306,7 @@ impl Ast {
         Ok((library_name, library_id))
     }
 
+    /// Looks up a package declaration by library and normalized package name.
     #[must_use]
     pub fn lookup_package_declaration(
         &self,
@@ -305,6 +318,7 @@ impl Ast {
             .copied()
     }
 
+    /// Returns the map of all package declarations keyed by library and name.
     #[must_use]
     pub fn package_declarations(
         &self,
@@ -312,6 +326,7 @@ impl Ast {
         &self.package_declarations
     }
 
+    /// Looks up an entity declaration by library and normalized entity name.
     #[must_use]
     pub fn lookup_entity_declaration(
         &self,
@@ -348,6 +363,8 @@ impl Ast {
         Ok((&entity_declaration.identifier, entity_id))
     }
 
+    /// Returns the architecture bodies associated with the given entity declaration.
+    #[must_use]
     pub fn lookup_architecture_bodies(
         &self,
         entity_declaration_id: NodeId<EntityDeclaration>,

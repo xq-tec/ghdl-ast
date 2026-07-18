@@ -1,70 +1,173 @@
+//! Predefined and user attribute expressions (LRM clause 16 / 6.7).
+//!
+//! [`Attribute`] is a predefined attribute application (`prefix'ATTR`).
+//! [`AttributeValue`] is the value produced by an attribute specification for a
+//! particular designated entity.
+
 use super::*;
 
+/// Value of an attribute for a designated entity after attribute specification.
+///
+/// Links a designated named entity to the expression from an
+/// [`AttributeSpecification`](crate::AttributeSpecification) and the resulting
+/// analyzed type.
+///
+/// ```vhdl
+/// attribute keep : boolean;
+/// attribute keep of clk : signal is true;
+/// -- AttributeValue.designated_entity = clk, expression comes from the spec
+/// ```
 #[derive(Debug, Deserialize, Serialize)]
-pub struct AttributeValue {}
+pub struct AttributeValue {
+    /// Analyzed type of the attribute value.
+    #[serde(rename = "type")]
+    pub typ: Option<SubtypeDefinitionNodeId>,
+    /// Entity (signal, variable, …) this attribute value applies to.
+    pub designated_entity: Option<NamedEntityNodeId>,
+    /// Attribute specification that created this value.
+    pub attribute_specification: Option<NodeId<AttributeSpecification>>,
+}
 
+/// Predefined attribute application (`prefix'kind`).
+///
+/// Distinguishes type attributes (`'left`, `'image`), array attributes
+/// (`'length`, `'range`), signal attributes (`'event`, `'last_value`), and AMS
+/// attributes. The [`kind`](Self::kind) enum encodes which predefined attribute
+/// was applied; parameters (if any) appear on more specific expression nodes
+/// elsewhere in the tree when GHDL expands them.
+///
+/// ```vhdl
+/// integer'high
+/// vec'length
+/// clk'event
+/// real'image(3.14)
+/// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Attribute {
+    /// Prefix the attribute is applied to.
     pub prefix: PrefixNodeId,
+    /// Which predefined attribute was selected.
     pub kind: AttributeKind,
 }
 
+/// Discriminant for a predefined VHDL attribute kind (LRM clause 16).
+///
+/// Covers type attributes (`'left`, `'image`), array attributes (`'length`,
+/// `'range`), signal attributes (`'event`, `'last_value`), AMS attributes, and
+/// naming attributes (`'simple_name`, `'path_name`). Variant names follow GHDL's
+/// exported `kind` strings (snake case). Several attributes share a source
+/// spelling (for example `'left` / `'right`) but are split into type vs array
+/// variants after analysis.
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AttributeKind {
+    /// `TYPE'base`
     Base,
+    /// `OBJECT'subtype`
     Subtype,
+    /// `ARRAY'element`
     Element,
+    /// `NATURE'across`
     Across,
+    /// `NATURE'through`
     Through,
+    /// `NATURE'reference`
     NatureReference,
+    /// `TYPE'left`
     LeftType,
+    /// `TYPE'right`
     RightType,
+    /// `TYPE'high`
     HighType,
+    /// `TYPE'low`
     LowType,
+    /// `TYPE'ascending`
     AscendingType,
+    /// `TYPE'image`
     Image,
+    /// `TYPE'value`
     Value,
+    /// `TYPE'pos`
     Pos,
+    /// `TYPE'val`
     Val,
+    /// `TYPE'succ`
     Succ,
+    /// `TYPE'pred`
     Pred,
+    /// `TYPE'leftof`
     Leftof,
+    /// `TYPE'rightof`
     Rightof,
+    /// `SIGNAL'slew`
     SignalSlew,
+    /// `QUANTITY'slew`
     QuantitySlew,
+    /// `SIGNAL'ramp`
     Ramp,
+    /// `QUANTITY'zoh`
     Zoh,
+    /// `QUANTITY'ltf`
     Ltf,
+    /// `QUANTITY'ztf`
     Ztf,
+    /// `QUANTITY'dot`
     Dot,
+    /// `QUANTITY'integ`
     Integ,
+    /// `QUANTITY'delayed`
     QuantityDelayed,
+    /// `QUANTITY'above`
     Above,
+    /// `SIGNAL'delayed`
     Delayed,
+    /// `SIGNAL'stable`
     Stable,
+    /// `SIGNAL'quiet`
     Quiet,
+    /// `SIGNAL'transaction`
     Transaction,
+    /// `SIGNAL'event`
     Event,
+    /// `SIGNAL'active`
     Active,
+    /// `SIGNAL'last_event`
     LastEvent,
+    /// `SIGNAL'last_active`
     LastActive,
+    /// `SIGNAL'last_value`
     LastValue,
+    /// `SIGNAL'driving`
     Driving,
+    /// `SIGNAL'driving_value`
     DrivingValue,
+    /// `ARCHITECTURE'behavior` (VHDL-87)
     Behavior,
+    /// `ARCHITECTURE'structure` (VHDL-87)
     Structure,
+    /// `NAMED_ENTITY'simple_name`
     SimpleName,
+    /// `NAMED_ENTITY'instance_name`
     InstanceName,
+    /// `NAMED_ENTITY'path_name`
     PathName,
+    /// `MODE_VIEW'converse`
     Converse,
+    /// `ARRAY'left`
     LeftArray,
+    /// `ARRAY'right`
     RightArray,
+    /// `ARRAY'high`
     HighArray,
+    /// `ARRAY'low`
     LowArray,
+    /// `ARRAY'length`
     LengthArray,
+    /// `ARRAY'ascending`
     AscendingArray,
+    /// `ARRAY'range`
     RangeArray,
+    /// `ARRAY'reverse_range`
     ReverseRangeArray,
 }
 
