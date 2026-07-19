@@ -68,7 +68,7 @@ pub struct DesignUnit {
     pub context_items: Vec<ContextItemNodeId>,
 }
 
-subset_declaration!(LibraryUnit LibraryUnitNodeId {
+subset_declaration!(LibraryUnit LibraryUnitOwned LibraryUnitNodeId {
     ConfigurationDeclaration(ConfigurationDeclaration),
     ContextDeclaration(ContextDeclaration),
     EntityDeclaration(EntityDeclaration),
@@ -153,10 +153,10 @@ pub struct EntityDeclaration {
     pub design_unit: NodeId<DesignUnit>,
     /// Generic interface list.
     #[serde(default)]
-    pub generics: Vec<InterfaceObjectDeclarationNodeId>,
+    pub generics: Vec<InterfaceDeclarationNodeId>,
     /// Port interface list.
     #[serde(default)]
-    pub ports: Vec<NodeId<InterfaceSignalDeclaration>>,
+    pub ports: Vec<PortInterfaceDeclarationNodeId>,
     /// Entity declarative region.
     #[serde(default)]
     pub declarations: Vec<DeclarationNodeId>,
@@ -281,8 +281,8 @@ pub struct InterfacePackageDeclaration {
 pub struct ArchitectureBody {
     /// Architecture identifier.
     pub identifier: Identifier,
-    /// Simple name of the entity this architecture implements.
-    pub entity_name: NodeId<SimpleName>,
+    /// Name of the entity this architecture implements.
+    pub entity_name: NameNodeId,
     /// Owning design unit.
     #[serde(rename = "parent")]
     pub design_unit: NodeId<DesignUnit>,
@@ -320,9 +320,10 @@ pub struct PackageBody {
     pub package: Option<NodeId<PackageDeclaration>>,
 }
 
-subset_declaration!(ContextItem ContextItemNodeId {
+subset_declaration!(ContextItem ContextItemOwned ContextItemNodeId {
     LibraryClause(LibraryClause),
     UseClause(UseClause),
+    ContextReference(ContextReference),
 });
 
 /// Library clause (`library ieee;`).
@@ -368,7 +369,7 @@ pub struct ForeignModule {
     pub generics: Vec<InterfaceDeclarationNodeId>,
     /// Port interface list.
     #[serde(default)]
-    pub ports: Vec<InterfaceObjectDeclarationNodeId>,
+    pub ports: Vec<PortInterfaceDeclarationNodeId>,
 }
 
 /// VHDL verification mode unit (`vmode …`).

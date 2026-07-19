@@ -14,7 +14,7 @@ use smallvec::SmallVec;
 
 use super::*;
 
-subset_declaration!(Expression ExpressionNodeId {
+subset_declaration!(Expression ExpressionOwned ExpressionNodeId {
     CharacterLiteral(CharacterLiteral),
     IntegerLiteral(IntegerLiteral),
     FloatingPointLiteral(FloatingPointLiteral),
@@ -47,7 +47,7 @@ subset_declaration!(Expression ExpressionNodeId {
     ImplicitDereference(ImplicitDereference),
 });
 
-subset_declaration!(Literal LiteralNodeId {
+subset_declaration!(Literal LiteralOwned LiteralNodeId {
     Integer(IntegerLiteral),
     FloatingPoint(FloatingPointLiteral),
     Null(NullLiteral),
@@ -56,7 +56,7 @@ subset_declaration!(Literal LiteralNodeId {
     PhysicalFp(PhysicalFpLiteral),
 });
 
-subset_declaration!(Allocator AllocatorNodeId {
+subset_declaration!(Allocator AllocatorOwned AllocatorNodeId {
     ByExpression(AllocatorByExpression),
     BySubtype(AllocatorBySubtype),
 });
@@ -247,6 +247,8 @@ pub struct FunctionCall {
     /// Parameter associations of the call.
     #[serde(default)]
     pub parameter_associations: Vec<AssociationElementNodeId>,
+    /// Protected-type method object when this call is a method invocation.
+    pub method_object: Option<GenericNodeId>,
     /// Return type of the call.
     #[serde(rename = "type")]
     pub return_type: SubtypeDefinitionNodeId,
@@ -302,7 +304,7 @@ pub struct PhysicalFpLiteral {
     pub unit_name: NameNodeId,
 }
 
-subset_declaration!(PhysicalLiteral PhysicalLiteralNodeId {
+subset_declaration!(PhysicalLiteral PhysicalLiteralOwned PhysicalLiteralNodeId {
     PhysicalInt(PhysicalIntLiteral),
     PhysicalFp(PhysicalFpLiteral),
 });
@@ -330,6 +332,9 @@ pub struct RangeExpression {
     pub left_limit: ExpressionNodeId,
     /// Right bound of the range.
     pub right_limit: ExpressionNodeId,
+    /// Analyzed type of the range (typically the discrete/floating subtype).
+    #[serde(rename = "type")]
+    pub typ: Option<SubtypeDefinitionNodeId>,
 }
 
 /// An aggregate expression.

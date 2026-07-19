@@ -6,7 +6,7 @@
 
 use super::*;
 
-subset_declaration!(ConcurrentStatement ConcurrentStatementNodeId {
+subset_declaration!(ConcurrentStatement ConcurrentStatementOwned ConcurrentStatementNodeId {
     Process(ProcessStatement),
     SensitizedProcess(SensitizedProcessStatement),
     Block(BlockStatement),
@@ -21,6 +21,18 @@ subset_declaration!(ConcurrentStatement ConcurrentStatementNodeId {
     ConcurrentProcedureCall(ConcurrentProcedureCallStatement),
     ConcurrentBreak(ConcurrentBreakStatement),
     SimpleSimultaneous(SimpleSimultaneousStatement),
+    SimultaneousCase(SimultaneousCaseStatement),
+    SimultaneousIf(SimultaneousIfStatement),
+    SimultaneousNull(SimultaneousNullStatement),
+    SimultaneousProcedural(SimultaneousProceduralStatement),
+});
+
+subset_declaration!(SimultaneousStatement SimultaneousStatementOwned SimultaneousStatementNodeId {
+    Simple(SimpleSimultaneousStatement),
+    Case(SimultaneousCaseStatement),
+    If(SimultaneousIfStatement),
+    Null(SimultaneousNullStatement),
+    Procedural(SimultaneousProceduralStatement),
 });
 
 /// A process statement without an explicit sensitivity list.
@@ -188,8 +200,11 @@ pub struct ConcurrentSimpleSignalAssignment {
     /// Waveform elements.
     #[serde(default)]
     pub waveforms: Vec<NodeId<WaveformElement>>,
-    /// GUARD signal when this is a guarded assignment inside a block.
-    pub guard: Option<ExpressionNodeId>,
+    /// Guard signal declaration when this is a guarded assignment inside a block.
+    ///
+    /// May also point at the assignment itself as a GHDL kludge marking it guarded
+    /// when the guard declaration is not yet known.
+    pub guard: Option<GenericNodeId>,
 }
 
 /// A concurrent procedure call statement.
@@ -234,8 +249,11 @@ pub struct ConcurrentSelectedSignalAssignment {
     /// Selected waveform alternatives as a choice chain.
     #[serde(default)]
     pub selected_waveforms: Vec<ChoiceNodeId>,
-    /// GUARD signal when this is a guarded assignment.
-    pub guard: Option<ExpressionNodeId>,
+    /// Guard signal declaration when this is a guarded assignment.
+    ///
+    /// May also point at the assignment itself as a GHDL kludge marking it guarded
+    /// when the guard declaration is not yet known.
+    pub guard: Option<GenericNodeId>,
 }
 
 /// A concurrent conditional signal assignment.
@@ -260,8 +278,11 @@ pub struct ConcurrentConditionalSignalAssignment {
     /// Conditional waveform arms.
     #[serde(default)]
     pub conditional_waveforms: Vec<NodeId<ConditionalWaveform>>,
-    /// GUARD signal when this is a guarded assignment.
-    pub guard: Option<ExpressionNodeId>,
+    /// Guard signal declaration when this is a guarded assignment.
+    ///
+    /// May also point at the assignment itself as a GHDL kludge marking it guarded
+    /// when the guard declaration is not yet known.
+    pub guard: Option<GenericNodeId>,
 }
 
 /// A concurrent AMS `break` statement.
@@ -435,7 +456,7 @@ pub struct SimultaneousIfStatement {
     pub condition: ExpressionNodeId,
     /// Simultaneous statements in the then-branch.
     #[serde(default)]
-    pub simultaneous_statements: Vec<NodeId<SimpleSimultaneousStatement>>,
+    pub simultaneous_statements: Vec<SimultaneousStatementNodeId>,
     /// Else/elsif chain.
     pub else_clause: Option<NodeId<SimultaneousElsif>>,
 }
@@ -447,7 +468,7 @@ pub struct SimultaneousElsif {
     pub condition: Option<ExpressionNodeId>,
     /// Simultaneous statements in this arm.
     #[serde(default)]
-    pub simultaneous_statements: Vec<NodeId<SimpleSimultaneousStatement>>,
+    pub simultaneous_statements: Vec<SimultaneousStatementNodeId>,
     /// Next else/elsif clause.
     pub else_clause: Option<NodeId<SimultaneousElsif>>,
 }

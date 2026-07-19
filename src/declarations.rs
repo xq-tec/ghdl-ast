@@ -1,6 +1,6 @@
 use super::*;
 
-subset_declaration!(Declaration DeclarationNodeId {
+subset_declaration!(Declaration DeclarationOwned DeclarationNodeId {
     Attribute(AttributeDeclaration),
     Subtype(SubtypeDeclaration),
     Type(TypeDeclaration),
@@ -20,20 +20,21 @@ subset_declaration!(Declaration DeclarationNodeId {
     SuspendState(SuspendStateDeclaration),
 });
 
-subset_declaration!(InterfaceDeclaration InterfaceDeclarationNodeId {
+subset_declaration!(InterfaceDeclaration InterfaceDeclarationOwned InterfaceDeclarationNodeId {
     Constant(InterfaceConstantDeclaration),
     Variable(InterfaceVariableDeclaration),
     Signal(InterfaceSignalDeclaration),
     View(InterfaceViewDeclaration),
     File(InterfaceFileDeclaration),
     Terminal(InterfaceTerminalDeclaration),
+    Quantity(InterfaceQuantityDeclaration),
     Type(InterfaceTypeDeclaration),
     Package(InterfacePackageDeclaration),
     Function(InterfaceFunctionDeclaration),
     Procedure(InterfaceProcedureDeclaration),
 });
 
-subset_declaration!(InterfaceObjectDeclaration InterfaceObjectDeclarationNodeId {
+subset_declaration!(InterfaceObjectDeclaration InterfaceObjectDeclarationOwned InterfaceObjectDeclarationNodeId {
     Constant(InterfaceConstantDeclaration),
     Variable(InterfaceVariableDeclaration),
     Signal(InterfaceSignalDeclaration),
@@ -41,7 +42,14 @@ subset_declaration!(InterfaceObjectDeclaration InterfaceObjectDeclarationNodeId 
     File(InterfaceFileDeclaration),
 });
 
-subset_declaration!(ObjectDeclaration ObjectDeclarationNodeId {
+subset_declaration!(PortInterfaceDeclaration PortInterfaceDeclarationOwned PortInterfaceDeclarationNodeId {
+    Signal(InterfaceSignalDeclaration),
+    View(InterfaceViewDeclaration),
+    Terminal(InterfaceTerminalDeclaration),
+    Quantity(InterfaceQuantityDeclaration),
+});
+
+subset_declaration!(ObjectDeclaration ObjectDeclarationOwned ObjectDeclarationNodeId {
     ObjectAlias(ObjectAliasDeclaration),
     File(FileDeclaration),
     GuardSignal(GuardSignalDeclaration),
@@ -56,19 +64,19 @@ subset_declaration!(ObjectDeclaration ObjectDeclarationNodeId {
     InterfaceFile(InterfaceFileDeclaration),
 });
 
-subset_declaration!(FunctionImplementation FunctionImplementationNodeId {
+subset_declaration!(FunctionImplementation FunctionImplementationOwned FunctionImplementationNodeId {
     Function(FunctionDeclaration),
     InterfaceFunction(InterfaceFunctionDeclaration),
     FunctionInstantiation(FunctionInstantiationDeclaration),
 });
 
-subset_declaration!(ProcedureImplementation ProcedureImplementationNodeId {
+subset_declaration!(ProcedureImplementation ProcedureImplementationOwned ProcedureImplementationNodeId {
     Procedure(ProcedureDeclaration),
     InterfaceProcedure(InterfaceProcedureDeclaration),
     ProcedureInstantiation(ProcedureInstantiationDeclaration),
 });
 
-subset_declaration!(SubprogramBody SubprogramBodyNodeId {
+subset_declaration!(SubprogramBody SubprogramBodyOwned SubprogramBodyNodeId {
     Function(FunctionBody),
     Procedure(ProcedureBody),
 });
@@ -156,8 +164,6 @@ pub struct InterfaceFileDeclaration {
     pub subtype_indication: Option<SubtypeDefinitionNodeId>,
     /// Mode when explicitly written.
     pub mode: Option<Mode>,
-    /// Optional default (rarely used for files).
-    pub default_value: Option<ExpressionNodeId>,
 }
 
 /// Secondary unit declaration inside a physical type (`units … end units`).
@@ -364,7 +370,7 @@ pub struct NonObjectAliasDeclaration {
 pub struct Signature {
     /// Parameter type marks in order.
     #[serde(default, rename = "type_marks_list")]
-    pub type_marks: Vec<SubtypeDefinitionNodeId>,
+    pub type_marks: Vec<NameNodeId>,
     /// Return type mark for functions.
     pub return_type_mark: Option<NameNodeId>,
     /// Prefix name the signature is attached to, when present.
@@ -450,8 +456,6 @@ pub struct ProcedureDeclaration {
     /// Parameter interface list.
     #[serde(default)]
     pub interface_declarations: Vec<InterfaceDeclarationNodeId>,
-    /// Unused for procedures; retained for structural symmetry with functions.
-    pub return_type: Option<SubtypeDefinitionNodeId>,
     /// Procedure body when present in the same analysis unit.
     pub subprogram_body: Option<NodeId<ProcedureBody>>,
     /// Generic interface list for generic procedures (VHDL-2008).
@@ -3496,10 +3500,10 @@ pub struct ComponentDeclaration {
     pub identifier: Option<Identifier>,
     /// Generic interface list.
     #[serde(default)]
-    pub generics: Vec<InterfaceObjectDeclarationNodeId>,
+    pub generics: Vec<InterfaceDeclarationNodeId>,
     /// Port interface list.
     #[serde(default)]
-    pub ports: Vec<InterfaceObjectDeclarationNodeId>,
+    pub ports: Vec<PortInterfaceDeclarationNodeId>,
 }
 
 /// Iterator / parameter specification of a `for` loop or `for` generate.

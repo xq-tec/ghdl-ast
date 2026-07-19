@@ -6,7 +6,7 @@
 
 use super::*;
 
-subset_declaration!(SequentialStatement SequentialStatementNodeId {
+subset_declaration!(SequentialStatement SequentialStatementOwned SequentialStatementNodeId {
     ProcedureCall(ProcedureCallStatement),
     Report(ReportStatement),
     Assert(AssertionStatement),
@@ -58,6 +58,8 @@ pub struct ProcedureCall {
     /// Actual parameter associations (positional or named).
     #[serde(default)]
     pub parameter_associations: Vec<AssociationElementNodeId>,
+    /// Protected-type method object when this call is a method invocation.
+    pub method_object: Option<GenericNodeId>,
 }
 
 /// A `report` statement.

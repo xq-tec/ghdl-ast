@@ -7,7 +7,7 @@
 
 use super::*;
 
-subset_declaration!(AssociationElement AssociationElementNodeId {
+subset_declaration!(AssociationElement AssociationElementOwned AssociationElementNodeId {
     ByExpression(AssociationElementByExpression),
     ByIndividual(AssociationElementByIndividual),
     ByName(AssociationElementByName),
@@ -18,7 +18,7 @@ subset_declaration!(AssociationElement AssociationElementNodeId {
     Terminal(AssociationElementTerminal),
 });
 
-subset_declaration!(AssociationConversion AssociationConversionNodeId {
+subset_declaration!(AssociationConversion AssociationConversionOwned AssociationConversionNodeId {
     FunctionCall(FunctionCall),
     TypeConversion(TypeConversion),
 });
@@ -118,9 +118,8 @@ pub struct AssociationElementOpen {
 /// Used when an array or record formal is associated element-by-element rather
 /// than as a whole. The formal names the composite interface object; the actual
 /// type records the type of the individually associated actual. Nested element
-/// associations are typically represented as sibling association elements in
-/// the enclosing map (or via GHDL's individual-association chain, which is not
-/// exported here).
+/// associations appear in [`individual_associations`](Self::individual_associations)
+/// when GHDL builds that chain.
 ///
 /// ```vhdl
 /// -- array formal associated by index
@@ -139,9 +138,14 @@ pub struct AssociationElementOpen {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AssociationElementByIndividual {
     /// Formal naming the composite interface object being individually associated.
-    pub formal: Option<NodeId<SimpleName>>,
+    pub formal: Option<NameNodeId>,
     /// Type of the actual used for the individual association.
-    pub actual_type: SubtypeDefinitionNodeId,
+    pub actual_type: Option<SubtypeDefinitionNodeId>,
+    /// Actual type definition when distinct from [`actual_type`](Self::actual_type).
+    pub actual_type_definition: Option<TypeAndSubtypeDefinitionNodeId>,
+    /// Nested individual associations for elements of the formal.
+    #[serde(default)]
+    pub individual_associations: Vec<AssociationElementNodeId>,
 }
 
 /// An association element for an interface package generic.

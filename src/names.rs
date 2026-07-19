@@ -20,7 +20,7 @@
 
 use super::*;
 
-subset_declaration!(DenotingName DenotingNameNodeId {
+subset_declaration!(DenotingName DenotingNameOwned DenotingNameNodeId {
     CharacterLiteral(CharacterLiteral),
     SimpleName(SimpleName),
     SelectedName(SelectedName),
@@ -28,7 +28,7 @@ subset_declaration!(DenotingName DenotingNameNodeId {
     ReferenceName(ReferenceName),
 });
 
-subset_declaration!(Name NameNodeId {
+subset_declaration!(Name NameOwned NameNodeId {
     AttributeName(AttributeName),
     IndexedName(IndexedName),
     SelectedByAllName(SelectedByAllName),
@@ -166,7 +166,7 @@ pub enum NameElement {
     Other,
 }
 
-subset_declaration!(AnySelectedName AnySelectedNameNodeId {
+subset_declaration!(AnySelectedName AnySelectedNameOwned AnySelectedNameNodeId {
     SelectedName(SelectedName),
     SelectedByAllName(SelectedByAllName),
 });
@@ -182,7 +182,7 @@ impl<'node> From<AnySelectedName<'node>> for Name<'node> {
     }
 }
 
-subset_declaration!(Prefix PrefixNodeId {
+subset_declaration!(Prefix PrefixOwned PrefixNodeId {
     AttributeName(AttributeName),
     IndexedName(IndexedName),
     SelectedName(SelectedName),
@@ -352,7 +352,7 @@ pub struct SliceName {
     pub suffix: RangeConstraintNodeId,
 }
 
-subset_declaration!(NamedEntity NamedEntityNodeId {
+subset_declaration!(NamedEntity NamedEntityOwned NamedEntityNodeId {
     TypeDeclaration(TypeDeclaration),
     VariableDeclaration(VariableDeclaration),
     ConstantDeclaration(ConstantDeclaration),
@@ -360,11 +360,15 @@ subset_declaration!(NamedEntity NamedEntityNodeId {
     FileDeclaration(FileDeclaration),
     ObjectAliasDeclaration(ObjectAliasDeclaration),
 
-    // InterfaceTypeDeclaration(InterfaceTypeDeclaration),
-    // InterfaceVariableDeclaration(InterfaceVariableDeclaration),
+    InterfaceTypeDeclaration(InterfaceTypeDeclaration),
+    InterfaceVariableDeclaration(InterfaceVariableDeclaration),
     InterfaceConstantDeclaration(InterfaceConstantDeclaration),
     InterfaceSignalDeclaration(InterfaceSignalDeclaration),
+    InterfaceViewDeclaration(InterfaceViewDeclaration),
     InterfaceFileDeclaration(InterfaceFileDeclaration),
+    InterfacePackageDeclaration(InterfacePackageDeclaration),
+    InterfaceFunctionDeclaration(InterfaceFunctionDeclaration),
+    InterfaceProcedureDeclaration(InterfaceProcedureDeclaration),
 
     AttributeDeclaration(AttributeDeclaration),
     ComponentDeclaration(ComponentDeclaration),

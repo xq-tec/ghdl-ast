@@ -33,8 +33,8 @@ pub struct AttributeValue {
 /// Distinguishes type attributes (`'left`, `'image`), array attributes
 /// (`'length`, `'range`), signal attributes (`'event`, `'last_value`), and AMS
 /// attributes. The [`kind`](Self::kind) enum encodes which predefined attribute
-/// was applied; parameters (if any) appear on more specific expression nodes
-/// elsewhere in the tree when GHDL expands them.
+/// was applied. Parameters such as `'image(x)` or `'val(n)` are stored on this
+/// node ([`parameter`](Self::parameter) / [`parameter_2`](Self::parameter_2)…).
 ///
 /// ```vhdl
 /// integer'high
@@ -48,6 +48,19 @@ pub struct Attribute {
     pub prefix: PrefixNodeId,
     /// Which predefined attribute was selected.
     pub kind: AttributeKind,
+    /// First attribute parameter (`ATTR(param)`), when present.
+    pub parameter: Option<ExpressionNodeId>,
+    /// Second attribute parameter (AMS attributes).
+    pub parameter_2: Option<ExpressionNodeId>,
+    /// Third attribute parameter (AMS attributes such as `'ztf`).
+    pub parameter_3: Option<ExpressionNodeId>,
+    /// Fourth attribute parameter (AMS attributes such as `'ztf`).
+    pub parameter_4: Option<ExpressionNodeId>,
+    /// Analyzed result type of the attribute application.
+    #[serde(rename = "type")]
+    pub typ: Option<SubtypeDefinitionNodeId>,
+    /// Index subtype for array attributes that yield a discrete range / type.
+    pub index_subtype: Option<SubtypeDefinitionNodeId>,
 }
 
 /// Discriminant for a predefined VHDL attribute kind (LRM clause 16).
@@ -211,7 +224,7 @@ impl fmt::Display for AttributeKind {
             Transaction => "TRANSACTION",
             Event => "EVENT",
             Active => "ACTIVE",
-            LastEvent => "LASTE_VENT",
+            LastEvent => "LAST_EVENT",
             LastActive => "LAST_ACTIVE",
             LastValue => "LAST_VALUE",
             Driving => "DRIVING",

@@ -9,7 +9,7 @@
 
 use super::*;
 
-subset_declaration!(Choice ChoiceNodeId {
+subset_declaration!(Choice ChoiceOwned ChoiceNodeId {
     ByRange(ChoiceByRange),
     ByExpression(ChoiceByExpression),
     ByOthers(ChoiceByOthers),
@@ -61,7 +61,8 @@ pub struct ChoiceByExpression {
     ///
     /// Used by aggregates and case generate. Absent when
     /// [`associateds`](Self::associateds) carries the association instead.
-    pub associated_expr: Option<ExpressionNodeId>,
+    /// Stored untyped because the payload kind depends on context.
+    pub associated_expr: Option<GenericNodeId>,
     /// Associated chain: sequential statements (case) or waveforms (selected
     /// assignment).
     ///
@@ -121,7 +122,7 @@ pub struct ChoiceByOthers {
     #[serde(default)]
     pub element_type_flag: bool,
     /// Associated expression, individual association, or generate body.
-    pub associated_expr: Option<ExpressionNodeId>,
+    pub associated_expr: Option<GenericNodeId>,
     /// Associated sequential statements or waveforms.
     #[serde(default, rename = "associateds")]
     pub associateds: Vec<GenericNodeId>,
@@ -149,7 +150,7 @@ pub struct ChoiceByRange {
     /// Discrete range of this choice.
     pub choice_range: RangeConstraintNodeId,
     /// Associated expression, individual association, or generate body.
-    pub associated_expr: Option<ExpressionNodeId>,
+    pub associated_expr: Option<GenericNodeId>,
     /// Associated sequential statements or waveforms.
     #[serde(default, rename = "associateds")]
     pub associateds: Vec<GenericNodeId>,
@@ -177,8 +178,8 @@ pub struct ChoiceByName {
     pub element_type_flag: bool,
     /// Record element name selected by this choice.
     pub choice_name: NameNodeId,
-    /// Associated expression for this named association.
-    pub associated_expr: Option<ExpressionNodeId>,
+    /// Associated expression, individual association, or generate body.
+    pub associated_expr: Option<GenericNodeId>,
     /// Associated chain when used outside aggregates (rarely set).
     #[serde(default, rename = "associateds")]
     pub associateds: Vec<GenericNodeId>,

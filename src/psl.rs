@@ -17,8 +17,10 @@ pub struct PslInheritSpec {
 /// Hierarchical name binding a verification unit into the design hierarchy.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PslHierarchicalName {
-    /// Name path locating the bind target.
-    pub name: Option<NameNodeId>,
+    /// Entity name locating the bind target.
+    pub entity_name: Option<NameNodeId>,
+    /// Optional architecture name when the bind names an architecture.
+    pub architecture: Option<NameNodeId>,
 }
 
 /// PSL declaration (property, sequence, or related PSL declarator).
@@ -56,6 +58,14 @@ pub struct PslEndpointDeclaration {
 /// PSL `prev` built-in application.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PslPrev {
+    /// Operand expression.
+    pub expression: Option<ExpressionNodeId>,
+    /// Optional count expression (`prev(e, n)`).
+    pub count_expression: Option<ExpressionNodeId>,
+    /// Explicit clock expression when present.
+    pub clock_expression: Option<ExpressionNodeId>,
+    /// Default clock used when no explicit clock is written.
+    pub default_clock: Option<GenericNodeId>,
     /// Analyzed result type.
     #[serde(rename = "type")]
     pub typ: Option<SubtypeDefinitionNodeId>,
@@ -64,6 +74,12 @@ pub struct PslPrev {
 /// PSL `stable` built-in application.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PslStable {
+    /// Operand expression.
+    pub expression: Option<ExpressionNodeId>,
+    /// Explicit clock expression when present.
+    pub clock_expression: Option<ExpressionNodeId>,
+    /// Default clock used when no explicit clock is written.
+    pub default_clock: Option<GenericNodeId>,
     /// Analyzed result type.
     #[serde(rename = "type")]
     pub typ: Option<SubtypeDefinitionNodeId>,
@@ -72,6 +88,12 @@ pub struct PslStable {
 /// PSL `rose` built-in application.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PslRose {
+    /// Operand expression.
+    pub expression: Option<ExpressionNodeId>,
+    /// Explicit clock expression when present.
+    pub clock_expression: Option<ExpressionNodeId>,
+    /// Default clock used when no explicit clock is written.
+    pub default_clock: Option<GenericNodeId>,
     /// Analyzed result type.
     #[serde(rename = "type")]
     pub typ: Option<SubtypeDefinitionNodeId>,
@@ -80,6 +102,12 @@ pub struct PslRose {
 /// PSL `fell` built-in application.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PslFell {
+    /// Operand expression.
+    pub expression: Option<ExpressionNodeId>,
+    /// Explicit clock expression when present.
+    pub clock_expression: Option<ExpressionNodeId>,
+    /// Default clock used when no explicit clock is written.
+    pub default_clock: Option<GenericNodeId>,
     /// Analyzed result type.
     #[serde(rename = "type")]
     pub typ: Option<SubtypeDefinitionNodeId>,
@@ -88,6 +116,8 @@ pub struct PslFell {
 /// PSL `onehot` built-in application.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PslOnehot {
+    /// Operand expression.
+    pub expression: Option<ExpressionNodeId>,
     /// Analyzed result type.
     #[serde(rename = "type")]
     pub typ: Option<SubtypeDefinitionNodeId>,
@@ -96,6 +126,8 @@ pub struct PslOnehot {
 /// PSL `onehot0` built-in application.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PslOnehot0 {
+    /// Operand expression.
+    pub expression: Option<ExpressionNodeId>,
     /// Analyzed result type.
     #[serde(rename = "type")]
     pub typ: Option<SubtypeDefinitionNodeId>,
@@ -112,34 +144,48 @@ pub struct PslExpression {
 /// PSL assert directive (`assert …`).
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PslAssertDirective {
-    /// Optional label / identifier.
-    pub identifier: Option<Identifier>,
+    /// Optional statement label.
+    pub label: Option<Identifier>,
+    /// Asserted PSL property (often a stubbed PSL node in the JSON export).
+    pub psl_property: Option<GenericNodeId>,
+    /// Optional report message expression.
+    pub report_expression: Option<ExpressionNodeId>,
+    /// Optional severity expression.
+    pub severity_expression: Option<ExpressionNodeId>,
 }
 
 /// PSL assume directive (`assume …`).
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PslAssumeDirective {
-    /// Optional label / identifier.
-    pub identifier: Option<Identifier>,
+    /// Optional statement label.
+    pub label: Option<Identifier>,
+    /// Assumed PSL property (often a stubbed PSL node in the JSON export).
+    pub psl_property: Option<GenericNodeId>,
 }
 
 /// PSL cover directive (`cover …`).
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PslCoverDirective {
-    /// Optional label / identifier.
-    pub identifier: Option<Identifier>,
+    /// Optional statement label.
+    pub label: Option<Identifier>,
+    /// Covered PSL sequence (often a stubbed PSL node in the JSON export).
+    pub psl_sequence: Option<GenericNodeId>,
+    /// Optional report message expression.
+    pub report_expression: Option<ExpressionNodeId>,
 }
 
 /// PSL restrict directive (`restrict …`).
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PslRestrictDirective {
-    /// Optional label / identifier.
-    pub identifier: Option<Identifier>,
+    /// Optional statement label.
+    pub label: Option<Identifier>,
+    /// Restricted PSL sequence (often a stubbed PSL node in the JSON export).
+    pub psl_sequence: Option<GenericNodeId>,
 }
 
 /// PSL default clock declaration (`default clock is …`).
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PslDefaultClock {
-    /// Optional identifier when the default clock is named.
-    pub identifier: Option<Identifier>,
+    /// Boolean clock expression of the default clock.
+    pub psl_boolean: Option<GenericNodeId>,
 }

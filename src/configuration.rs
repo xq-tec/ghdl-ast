@@ -16,25 +16,26 @@ use super::*;
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct EntityAspectEntity {
-    /// Selected name of the entity declaration (often `library.entity`).
-    pub entity_name: NodeId<SelectedName>,
+    /// Name of the entity declaration (often `library.entity`, sometimes simple).
+    pub entity_name: NameNodeId,
     /// Optional architecture simple name when an architecture is written.
     pub architecture: Option<NodeId<SimpleName>>,
 }
 
-subset_declaration!(InstantiatedUnit InstantiatedUnitNodeId {
+subset_declaration!(InstantiatedUnit InstantiatedUnitOwned InstantiatedUnitNodeId {
     EntityAspectEntity(EntityAspectEntity),
+    EntityAspectConfiguration(EntityAspectConfiguration),
     SimpleName(SimpleName),
     SelectedName(SelectedName),
 });
 
-subset_declaration!(EntityAspect EntityAspectNodeId {
+subset_declaration!(EntityAspect EntityAspectOwned EntityAspectNodeId {
     Entity(EntityAspectEntity),
     Configuration(EntityAspectConfiguration),
     Open(EntityAspectOpen),
 });
 
-subset_declaration!(ConfigurationItem ConfigurationItemNodeId {
+subset_declaration!(ConfigurationItem ConfigurationItemOwned ConfigurationItemNodeId {
     Block(BlockConfiguration),
     Component(ComponentConfiguration),
 });
@@ -157,7 +158,7 @@ pub struct BlockHeader {
     pub generics: Vec<InterfaceDeclarationNodeId>,
     /// Interface port declarations of the block.
     #[serde(default)]
-    pub ports: Vec<InterfaceObjectDeclarationNodeId>,
+    pub ports: Vec<PortInterfaceDeclarationNodeId>,
     /// Generic map associations connecting block generics to actuals.
     #[serde(default)]
     pub generic_map_aspects: Vec<AssociationElementNodeId>,

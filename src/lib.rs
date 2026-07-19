@@ -260,7 +260,10 @@ impl Ast {
                     LibraryUnit::ArchitectureBody(architecture) => {
                         let entity_name = architecture.entity_name.get(self);
                         // TODO shouldn't we check that the id is of the correct variant rather than just down-casting?
-                        let entity_declaration_id = entity_name.named_entity.downcast();
+                        let entity_declaration_id = entity_name
+                            .named_entity()
+                            .expect("architecture entity_name should resolve") // TODO return Err(_) instead
+                            .downcast();
                         architecture_bodies
                             .entry(entity_declaration_id)
                             .or_default()

@@ -7,7 +7,7 @@
 
 use super::*;
 
-subset_declaration!(SubtypeDefinition SubtypeDefinitionNodeId {
+subset_declaration!(SubtypeDefinition SubtypeDefinitionOwned SubtypeDefinitionNodeId {
     Integer(IntegerSubtypeDefinition),
     Floating(FloatingSubtypeDefinition),
     Physical(PhysicalSubtypeDefinition),
@@ -18,7 +18,7 @@ subset_declaration!(SubtypeDefinition SubtypeDefinitionNodeId {
     File(FileSubtypeDefinition),
 });
 
-subset_declaration!(TypeDefinition TypeDefinitionNodeId {
+subset_declaration!(TypeDefinition TypeDefinitionOwned TypeDefinitionNodeId {
     Array(ArrayTypeDefinition),
     Enumeration(EnumerationTypeDefinition),
     Access(AccessTypeDefinition),
@@ -30,14 +30,14 @@ subset_declaration!(TypeDefinition TypeDefinitionNodeId {
     ErrorNode(Error),
 });
 
-subset_declaration!(AnonymousTypeDefinition AnonymousTypeDefinitionNodeId {
+subset_declaration!(AnonymousTypeDefinition AnonymousTypeDefinitionOwned AnonymousTypeDefinitionNodeId {
     Integer(IntegerTypeDefinition),
     Floating(FloatingTypeDefinition),
     Physical(PhysicalTypeDefinition),
     Array(ArrayTypeDefinition),
 });
 
-subset_declaration!(TypeAndSubtypeDefinition TypeAndSubtypeDefinitionNodeId {
+subset_declaration!(TypeAndSubtypeDefinition TypeAndSubtypeDefinitionOwned TypeAndSubtypeDefinitionNodeId {
     AccessType(AccessTypeDefinition),
     IncompleteType(IncompleteTypeDefinition),
     FileType(FileTypeDefinition),
@@ -58,12 +58,12 @@ subset_declaration!(TypeAndSubtypeDefinition TypeAndSubtypeDefinitionNodeId {
     WildcardType(WildcardTypeDefinition),
 });
 
-subset_declaration!(PhysicalTypeOrSubtype PhysicalTypeOrSubtypeNodeId {
+subset_declaration!(PhysicalTypeOrSubtype PhysicalTypeOrSubtypeOwned PhysicalTypeOrSubtypeNodeId {
     Type(PhysicalTypeDefinition),
     Subtype(PhysicalSubtypeDefinition),
 });
 
-subset_declaration!(RangeConstraint RangeConstraintNodeId {
+subset_declaration!(RangeConstraint RangeConstraintOwned RangeConstraintNodeId {
     Expression(RangeExpression),
     Attribute(Attribute),
 });
@@ -101,6 +101,12 @@ pub struct IntegerTypeDefinition {
 pub struct IntegerSubtypeDefinition {
     /// Constrained range of this subtype.
     pub range_constraint: RangeConstraintNodeId,
+    /// Parent integer type or subtype.
+    pub parent_type: Option<TypeAndSubtypeDefinitionNodeId>,
+    /// Type mark from the subtype indication, when present in the source.
+    pub subtype_type_mark: Option<NameNodeId>,
+    /// Optional resolution function / record / array resolution indication.
+    pub resolution_indication: Option<GenericNodeId>,
 }
 
 /// Anonymous floating type definition (`type T is range …`).
@@ -129,6 +135,12 @@ pub struct FloatingTypeDefinition {
 pub struct FloatingSubtypeDefinition {
     /// Constrained range of this subtype.
     pub range_constraint: RangeConstraintNodeId,
+    /// Parent floating type or subtype.
+    pub parent_type: Option<TypeAndSubtypeDefinitionNodeId>,
+    /// Type mark from the subtype indication, when present in the source.
+    pub subtype_type_mark: Option<NameNodeId>,
+    /// Optional resolution function / record / array resolution indication.
+    pub resolution_indication: Option<GenericNodeId>,
 }
 
 /// Enumeration type definition (`type T is (…)`).
@@ -245,10 +257,20 @@ pub struct ArrayTypeDefinition {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ArraySubtypeDefinition {
+    /// Parent array type or subtype.
+    pub parent_type: Option<TypeAndSubtypeDefinitionNodeId>,
     /// Element subtype after analysis (may carry element constraints).
     pub element_subtype: SubtypeDefinitionNodeId,
     /// Index subtypes after analysis (one entry per dimension).
+    #[serde(default)]
     pub index_subtype_list: Vec<SubtypeDefinitionNodeId>,
+    /// Index constraints from the subtype indication (source constraints).
+    #[serde(default)]
+    pub index_constraint_list: Vec<SubtypeDefinitionNodeId>,
+    /// Type mark from the subtype indication, when present in the source.
+    pub subtype_type_mark: Option<NameNodeId>,
+    /// Optional resolution function / record / array resolution indication.
+    pub resolution_indication: Option<GenericNodeId>,
 }
 
 /// Access type definition (`type T is access …`).
@@ -385,9 +407,9 @@ pub struct AccessSubtypeDefinition {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct IncompleteTypeDefinition {
-    /// Names / references that pointed at this incomplete type.
+    /// Access type definitions that designated this incomplete type.
     #[serde(default)]
-    pub incomplete_type_refs: Vec<GenericNodeId>,
+    pub incomplete_type_refs: Vec<NodeId<AccessTypeDefinition>>,
     /// Completed type definition once the full type is analyzed.
     pub complete_type_definition: Option<TypeAndSubtypeDefinitionNodeId>,
 }
@@ -548,8 +570,8 @@ pub struct ScalarNatureDefinition {
     pub across_type: Option<TypeAndSubtypeDefinitionNodeId>,
     /// Analyzed through type.
     pub through_type: Option<TypeAndSubtypeDefinitionNodeId>,
-    /// Reference terminal name (`… reference`).
-    pub reference: Option<NameNodeId>,
+    /// Reference terminal declaration appended after the nature declaration.
+    pub reference: Option<NodeId<TerminalDeclaration>>,
     /// Base nature (self for a root scalar nature).
     pub base_nature: Option<GenericNodeId>,
 }

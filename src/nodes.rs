@@ -71,31 +71,31 @@ impl<T> From<IdPrimitive> for NodeId<T> {
     }
 }
 
-// this manual implementation is required to get rid of the `T: PartialEq` trait bound which a derived implementation would imply
+// This manual implementation is required to get rid of the `T: PartialEq` trait bound which a derived implementation would imply
 impl<T> PartialEq for NodeId<T> {
     fn eq(&self, other: &Self) -> bool {
         self.0 == other.0
     }
 }
 
-// this manual implementation is required to get rid of the `T: Eq` trait bound which a derived implementation would imply
+// This manual implementation is required to get rid of the `T: Eq` trait bound which a derived implementation would imply
 impl<T> Eq for NodeId<T> {}
 
-// this manual implementation is required to get rid of the `T: Hash` trait bound which a derived implementation would imply
+// This manual implementation is required to get rid of the `T: Hash` trait bound which a derived implementation would imply
 impl<T> Hash for NodeId<T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.0.hash(state);
     }
 }
 
-// this manual implementation is required to get rid of the `T: Clone` trait bound which a derived implementation would imply
+// This manual implementation is required to get rid of the `T: Clone` trait bound which a derived implementation would imply
 impl<T> Clone for NodeId<T> {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-// this manual implementation is required to get rid of the `T: Copy` trait bound which a derived implementation would imply
+// This manual implementation is required to get rid of the `T: Copy` trait bound which a derived implementation would imply
 impl<T> Copy for NodeId<T> {}
 
 impl<T> Default for NodeId<T> {
@@ -110,10 +110,16 @@ impl<T> Default for NodeId<T> {
 /// Untyped node ID that can refer to any [`Node`] variant.
 pub type GenericNodeId = NodeId<Node>;
 
-/// Looks up an AST node by ID and downcasts it to the expected type.
-pub trait AstNodeId: Into<GenericNodeId> {
+/// Allows look-up of an AST node by ID and downcasts it to the expected type.
+pub trait AstNodeId {
     /// Node type produced by a successful lookup for this ID kind.
     type NodeType<'ast>;
+
+    /// Owned node type produced by a successful decoding for this ID kind.
+    type OwnedNodeType;
+
+    /// Returns the raw non-zero index stored in this ID.
+    fn id_primitive(&self) -> IdPrimitive;
 
     /// Gets the node of the expected type from the AST.
     ///
@@ -121,7 +127,7 @@ pub trait AstNodeId: Into<GenericNodeId> {
     ///
     /// Panics if the node is missing or has the wrong type.
     #[track_caller]
-    fn get<'ast>(self, ast: &'ast Ast) -> Self::NodeType<'ast>
+    fn get<'ast>(&self, ast: &'ast Ast) -> Self::NodeType<'ast>
     where
         Self::NodeType<'ast>: TryFrom<&'ast Node>,
     {
@@ -137,20 +143,30 @@ pub trait AstNodeId: Into<GenericNodeId> {
     /// # Errors
     ///
     /// Returns an `Err` if the node is not found or is not of the expected type.
-    fn try_get<'ast>(self, ast: &'ast Ast) -> Result<Self::NodeType<'ast>, LookupNodeError>
+    fn try_get<'ast>(&self, ast: &'ast Ast) -> Result<Self::NodeType<'ast>, LookupNodeError>
     where
         Self::NodeType<'ast>: TryFrom<&'ast Node>,
     {
-        let id: GenericNodeId = self.into();
-        let index = id.0.get() as usize;
+        let id = self.id_primitive();
+        let index = id.get() as usize;
         match ast.nodes.get(index) {
-            Some(Node::Empty) | None => {
-                Err(LookupNodeError::not_found::<Self::NodeType<'ast>>(id.0))
-            },
+            Some(Node::Empty) | None => Err(LookupNodeError::not_found::<Self::NodeType<'ast>>(id)),
             Some(node) => node.try_into().map_err(|_ignore| {
-                LookupNodeError::wrong_type::<Self::NodeType<'ast>>(id.0, node.type_str())
+                LookupNodeError::wrong_type::<Self::NodeType<'ast>>(id, node.type_str())
             }),
         }
+    }
+}
+
+impl<T> AstNodeId for NodeId<T>
+where
+    T: 'static,
+{
+    type NodeType<'ast> = &'ast T;
+    type OwnedNodeType = T;
+
+    fn id_primitive(&self) -> IdPrimitive {
+        self.0
     }
 }
 
@@ -203,17 +219,6 @@ pub trait DowncastNodeId<T>: Into<GenericNodeId> {
     fn downcast(self) -> NodeId<T> {
         NodeId(self.into().0, PhantomData)
     }
-}
-
-impl AstNodeId for GenericNodeId {
-    type NodeType<'ast> = Node;
-}
-
-impl<T: 'static> AstNodeId for &NodeId<T>
-where
-    for<'a> &'a NodeId<T>: Into<GenericNodeId>,
-{
-    type NodeType<'ast> = &'ast T;
 }
 
 impl<T> Display for NodeId<T> {
@@ -608,13 +613,15 @@ node_declaration! {
 /// ```
 #[macro_export]
 macro_rules! subset_declaration {
-    ( $name:ident $name_id:ident {
+    ( $name:ident $owned_name:ident $name_id:ident {
         $(
             $(#[$variant_attr:meta])*
             $variant:ident($type:ident)
         ),+ $(,)?
     } ) => {
-        /// Typed subset of [`Node`] variants for a particular AST role.
+        #[doc = concat!("The `", stringify!($name), "` subset of [AST nodes](Node), referenced by [`", stringify!($name_id), "`].")]
+        #[doc = ""]
+        #[doc = concat!("This is the reference variant; use [`", stringify!($owned_name), "`] for the owned variant.")]
         #[derive(Clone, Copy, Debug)]
         #[expect(missing_docs, reason = "redundant")]
         pub enum $name<'ast> {
@@ -628,6 +635,34 @@ macro_rules! subset_declaration {
             type Error = $crate::TryFromNodeError;
 
             fn try_from(value: &'ast $crate::Node) -> ::std::result::Result<Self, Self::Error> {
+                match value {
+                    $(
+                        $crate::Node::$type(inner) => Ok(Self::$variant(inner)),
+                    )+
+                    _ => Err($crate::TryFromNodeError {
+                        actual: value.type_str(),
+                        expected: stringify!($name),
+                    }),
+                }
+            }
+        }
+
+        #[doc = concat!("The `", stringify!($name), "` subset of [AST nodes](Node), referenced by [`", stringify!($name_id), "`].")]
+        #[doc = ""]
+        #[doc = concat!("This is the owned variant; use [`", stringify!($name), "`] for the reference variant.")]
+        #[derive(Debug)]
+        #[expect(missing_docs, reason = "redundant")]
+        pub enum $owned_name {
+            $(
+                $(#[$variant_attr])*
+                $variant($crate::$type),
+            )+
+        }
+
+        impl ::std::convert::TryFrom<$crate::Node> for $owned_name {
+            type Error = $crate::TryFromNodeError;
+
+            fn try_from(value: $crate::Node) -> ::std::result::Result<Self, Self::Error> {
                 match value {
                     $(
                         $crate::Node::$type(inner) => Ok(Self::$variant(inner)),
@@ -660,6 +695,11 @@ macro_rules! subset_declaration {
 
         impl $crate::AstNodeId for $name_id {
             type NodeType<'ast> = $name<'ast>;
+            type OwnedNodeType = $owned_name;
+
+            fn id_primitive(&self) -> $crate::IdPrimitive {
+                self.0
+            }
         }
 
         impl ::std::fmt::Display for $name_id {
