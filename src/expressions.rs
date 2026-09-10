@@ -441,10 +441,17 @@ impl fmt::Debug for Latin1String {
     }
 }
 
+impl From<&Latin1Str> for Latin1String {
+    fn from(value: &Latin1Str) -> Self {
+        Self {
+            characters: SmallVec::from_slice(value.as_bytes()),
+        }
+    }
+}
+
 impl TryFrom<CompactString> for Latin1String {
     type Error = LatinStringError;
 
-    #[expect(clippy::indexing_slicing, reason = "// TODO explain why this is safe")]
     fn try_from(value: CompactString) -> Result<Self, Self::Error> {
         let mut bytes = value.into_bytes();
         if let Some(first) = bytes.iter().position(|&byte| byte >= 0x80) {
