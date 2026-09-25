@@ -30,11 +30,12 @@ mod waveforms;
 use std::env;
 use std::fmt;
 use std::io::BufRead;
-use std::path::PathBuf;
 
 use anyhow::Context as _;
 use anyhow::Result;
 use anyhow::bail;
+use camino::Utf8Path;
+use camino::Utf8PathBuf;
 use compact_str::CompactString;
 use serde::Deserialize;
 use serde::Deserializer;
@@ -136,7 +137,7 @@ enum GhdlSource {
     #[serde(rename = "*std_standard*")]
     StdStandard,
     #[serde(untagged)]
-    File(PathBuf),
+    File(Utf8PathBuf),
 }
 
 /// Result of loading an AST from a JSON stream.
@@ -159,6 +160,11 @@ pub struct Ast {
     entity_declarations: Map<(NodeId<Library>, NormalizedIdentifier), NodeId<EntityDeclaration>>,
     /// Map from entity declaration node ID to their architectures.
     architecture_bodies: Map<NodeId<EntityDeclaration>, Vec<NodeId<ArchitectureBody>>>,
+    /// Source files in GHDL file-table order.
+    ///
+    /// `None` is a virtual entry (`*std_standard*`, `*libraries*`, or `*command line*`).
+    /// [`Location::file_name`] indexes this list.
+    source_files: Vec<Option<Utf8PathBuf>>,
 }
 
 impl Ast {
@@ -209,12 +215,21 @@ impl Ast {
             }
         }
 
+        let source_files = metadata
+            .files
+            .into_iter()
+            .map(|file| match file.source {
+                GhdlSource::File(path) => Some(path),
+                GhdlSource::Libraries | GhdlSource::CommandLine | GhdlSource::StdStandard => None,
+            })
+            .collect();
         let mut ast = Self {
             nodes,
             libraries: Map::default(),
             package_declarations: Map::default(),
             entity_declarations: Map::default(),
             architecture_bodies: Map::default(),
+            source_files,
         };
         ast.build_maps(&metadata.libraries);
         debug_assert!(
@@ -364,6 +379,23 @@ impl Ast {
         }
         let entity_declaration = entity_id.get(self);
         Ok((&entity_declaration.identifier, entity_id))
+    }
+
+    /// Returns the source files in GHDL file-table order.
+    ///
+    /// `None` is a virtual entry. [`Location::file_name`] is an index into this slice.
+    #[must_use]
+    pub fn source_files(&self) -> &[Option<Utf8PathBuf>] {
+        &self.source_files
+    }
+
+    /// Returns the path of the source file at `index`.
+    ///
+    /// Returns `None` when `index` is out of range or names a virtual file entry.
+    #[must_use]
+    pub fn source_file(&self, index: u32) -> Option<&Utf8Path> {
+        let file = self.source_files.get(usize::try_from(index).ok()?)?;
+        file.as_deref()
     }
 
     /// Returns the architecture bodies associated with the given entity declaration.

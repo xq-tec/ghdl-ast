@@ -69,6 +69,10 @@ pub struct ProcedureCall {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ReportStatement {
+    /// Source location of the statement.
+    #[serde(default, rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Message expression (typically a string).
@@ -251,6 +255,10 @@ pub struct CaseStatement {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AssertionStatement {
+    /// Source location of the statement.
+    #[serde(default, rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Condition that must hold; failure triggers the report/severity.
