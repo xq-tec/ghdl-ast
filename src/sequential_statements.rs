@@ -70,7 +70,7 @@ pub struct ProcedureCall {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ReportStatement {
     /// Source location of the statement.
-    #[serde(default, rename = "loc")]
+    #[serde(rename = "loc")]
     pub location: Option<Location>,
 
     /// Optional statement label.
@@ -160,10 +160,13 @@ pub struct VariableAssignmentStatement {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct WaitStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Explicit sensitivity list (`on …`), if any.
-    #[serde(default)]
     pub sensitivity_list: Option<SensitivityList>,
     /// Condition clause (`until …`), if any.
     pub condition_clause: Option<ExpressionNodeId>,
@@ -256,7 +259,7 @@ pub struct CaseStatement {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AssertionStatement {
     /// Source location of the statement.
-    #[serde(default, rename = "loc")]
+    #[serde(rename = "loc")]
     pub location: Option<Location>,
 
     /// Optional statement label.
