@@ -3561,7 +3561,7 @@ pub struct GuardSignalDeclaration {
 /// declare them explicitly.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AttributeImplicitDeclaration {
-    /// Linked implicit attribute objects.
+    /// Implicit attribute objects.
     #[serde(default)]
     pub attribute_implicits: Vec<GenericNodeId>,
 }

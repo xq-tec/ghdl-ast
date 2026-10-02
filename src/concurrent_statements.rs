@@ -168,7 +168,9 @@ pub struct ConcurrentAssertionStatement {
     /// Whether this is a postponed concurrent assertion.
     pub postponed_flag: bool,
     /// Asserted condition.
-    pub assertion_condition: ExpressionNodeId,
+    ///
+    /// `None` after elaboration; the equivalent process has already been generated.
+    pub assertion_condition: Option<ExpressionNodeId>,
     /// Optional message.
     pub report_expression: Option<ExpressionNodeId>,
     /// Optional severity.
@@ -219,7 +221,9 @@ pub struct ConcurrentProcedureCallStatement {
     /// Whether this is a postponed call.
     pub postponed_flag: bool,
     /// The procedure call.
-    pub procedure_call: NodeId<ProcedureCall>,
+    ///
+    /// `None` after elaboration; the equivalent process has already been generated.
+    pub procedure_call: Option<NodeId<ProcedureCall>>,
 }
 
 /// A concurrent selected signal assignment.
@@ -237,9 +241,13 @@ pub struct ConcurrentSelectedSignalAssignment {
     /// Whether this is a postponed assignment.
     pub postponed_flag: bool,
     /// Assignment target.
-    pub target: ExpressionNodeId,
+    ///
+    /// `None` after elaboration; the equivalent process has already been generated.
+    pub target: Option<ExpressionNodeId>,
     /// Selecting expression.
-    pub expression: ExpressionNodeId,
+    ///
+    /// `None` after elaboration; the equivalent process has already been generated.
+    pub expression: Option<ExpressionNodeId>,
     /// Inertial or transport delay mechanism.
     pub delay_mechanism: DelayMechanism,
     /// Optional pulse-rejection limit.

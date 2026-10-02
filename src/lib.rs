@@ -266,8 +266,12 @@ impl Ast {
                     },
 
                     LibraryUnit::EntityDeclaration(entity_declaration) => {
+                        // Unnamed macro-expanded copies are not lookup keys.
+                        let Some(identifier) = &entity_declaration.identifier else {
+                            continue;
+                        };
                         entity_declarations.insert(
-                            (library_id, entity_declaration.identifier.normalized.clone()),
+                            (library_id, identifier.normalized.clone()),
                             library_unit_id.downcast(),
                         );
                     },
@@ -378,7 +382,10 @@ impl Ast {
             bail!("multiple entities found in this library");
         }
         let entity_declaration = entity_id.get(self);
-        Ok((&entity_declaration.identifier, entity_id))
+        let Some(identifier) = &entity_declaration.identifier else {
+            bail!("entity declaration has no identifier");
+        };
+        Ok((identifier, entity_id))
     }
 
     /// Returns the source files in GHDL file-table order.

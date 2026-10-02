@@ -147,10 +147,14 @@ pub struct EntityDeclaration {
     /// Node ID of this entity (exported by GHDL for self-reference).
     pub id: NodeId<Self>,
     /// Entity identifier.
-    pub identifier: Identifier,
+    ///
+    /// Absent on macro-expanded copies that do not store a name.
+    pub identifier: Option<Identifier>,
     /// Owning design unit.
+    ///
+    /// Absent when the entity is not linked to a design unit.
     #[serde(rename = "parent")]
-    pub design_unit: NodeId<DesignUnit>,
+    pub design_unit: Option<NodeId<DesignUnit>>,
     /// Generic interface list.
     #[serde(default)]
     pub generics: Vec<InterfaceDeclarationNodeId>,

@@ -247,7 +247,7 @@ pub struct IndexedName {
     pub index_list: IndexList,
     /// Analyzed type of the indexed element.
     #[serde(rename = "type")]
-    pub typ: SubtypeDefinitionNodeId,
+    pub typ: Option<SubtypeDefinitionNodeId>,
 }
 
 /// Operator symbol used as a denoting name (`"+"` , `"and"`, …).
@@ -328,7 +328,11 @@ pub struct SelectedName {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SimpleName {
     /// Identifier as written / stored by GHDL.
-    pub identifier: Identifier,
+    ///
+    /// Omitted for an implicit name, such as a default configuration's block
+    /// specification.
+    #[serde(default)]
+    pub identifier: Option<Identifier>,
     /// Resolved named entity (or the global error node when unresolved).
     #[serde(default = "unresolved_named_entity")]
     pub named_entity: NamedEntityNodeId,

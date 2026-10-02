@@ -395,8 +395,8 @@ pub struct AccessSubtypeDefinition {
 /// Used for mutually recursive access/record types. After the full type is
 /// declared, [`complete_type_definition`](Self::complete_type_definition) points
 /// at the completed definition and
-/// [`incomplete_type_refs`](Self::incomplete_type_refs) lists names that referred
-/// to the incomplete type.
+/// [`incomplete_type_refs`](Self::incomplete_type_refs) lists the access types
+/// that referred to this incomplete type.
 ///
 /// ```vhdl
 /// type cell;                      -- IncompleteTypeDefinition
@@ -407,7 +407,9 @@ pub struct AccessSubtypeDefinition {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct IncompleteTypeDefinition {
-    /// Access type definitions that designated this incomplete type.
+    /// Access types that designated this incomplete type, in GHDL chain order.
+    ///
+    /// Most recently declared first.
     #[serde(default)]
     pub incomplete_type_refs: Vec<NodeId<AccessTypeDefinition>>,
     /// Completed type definition once the full type is analyzed.

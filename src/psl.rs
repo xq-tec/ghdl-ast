@@ -5,6 +5,13 @@
 //! that are reliably present; treat missing optional fields as incomplete
 //! export rather than absent source constructs.
 
+use std::fmt::Formatter;
+use std::fmt::Result as FmtResult;
+
+use serde::Deserializer;
+use serde::de::Error;
+use serde::de::Visitor;
+
 use super::*;
 
 /// PSL inherit specification attaching inherited verification content.
@@ -65,6 +72,7 @@ pub struct PslPrev {
     /// Explicit clock expression when present.
     pub clock_expression: Option<ExpressionNodeId>,
     /// Default clock used when no explicit clock is written.
+    #[serde(default, deserialize_with = "deserialize_optional_psl_node")]
     pub default_clock: Option<GenericNodeId>,
     /// Analyzed result type.
     #[serde(rename = "type")]
@@ -79,6 +87,7 @@ pub struct PslStable {
     /// Explicit clock expression when present.
     pub clock_expression: Option<ExpressionNodeId>,
     /// Default clock used when no explicit clock is written.
+    #[serde(default, deserialize_with = "deserialize_optional_psl_node")]
     pub default_clock: Option<GenericNodeId>,
     /// Analyzed result type.
     #[serde(rename = "type")]
@@ -93,6 +102,7 @@ pub struct PslRose {
     /// Explicit clock expression when present.
     pub clock_expression: Option<ExpressionNodeId>,
     /// Default clock used when no explicit clock is written.
+    #[serde(default, deserialize_with = "deserialize_optional_psl_node")]
     pub default_clock: Option<GenericNodeId>,
     /// Analyzed result type.
     #[serde(rename = "type")]
@@ -107,6 +117,7 @@ pub struct PslFell {
     /// Explicit clock expression when present.
     pub clock_expression: Option<ExpressionNodeId>,
     /// Default clock used when no explicit clock is written.
+    #[serde(default, deserialize_with = "deserialize_optional_psl_node")]
     pub default_clock: Option<GenericNodeId>,
     /// Analyzed result type.
     #[serde(rename = "type")]
@@ -147,6 +158,7 @@ pub struct PslAssertDirective {
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Asserted PSL property (often a stubbed PSL node in the JSON export).
+    #[serde(default, deserialize_with = "deserialize_optional_psl_node")]
     pub psl_property: Option<GenericNodeId>,
     /// Optional report message expression.
     pub report_expression: Option<ExpressionNodeId>,
@@ -160,6 +172,7 @@ pub struct PslAssumeDirective {
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Assumed PSL property (often a stubbed PSL node in the JSON export).
+    #[serde(default, deserialize_with = "deserialize_optional_psl_node")]
     pub psl_property: Option<GenericNodeId>,
 }
 
@@ -169,6 +182,7 @@ pub struct PslCoverDirective {
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Covered PSL sequence (often a stubbed PSL node in the JSON export).
+    #[serde(default, deserialize_with = "deserialize_optional_psl_node")]
     pub psl_sequence: Option<GenericNodeId>,
     /// Optional report message expression.
     pub report_expression: Option<ExpressionNodeId>,
@@ -180,6 +194,7 @@ pub struct PslRestrictDirective {
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Restricted PSL sequence (often a stubbed PSL node in the JSON export).
+    #[serde(default, deserialize_with = "deserialize_optional_psl_node")]
     pub psl_sequence: Option<GenericNodeId>,
 }
 
@@ -187,5 +202,66 @@ pub struct PslRestrictDirective {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PslDefaultClock {
     /// Boolean clock expression of the default clock.
+    ///
+    /// GHDL exports the PSL node as the stub `"PSL-NODE"`, which deserializes
+    /// as `None`.
+    #[serde(default, deserialize_with = "deserialize_optional_psl_node")]
     pub psl_boolean: Option<GenericNodeId>,
+}
+
+/// Deserializes a PSL field exported as a node id or as a `"PSL-NODE"` / `"PSL-NFA"` stub.
+///
+/// Stubs, JSON `null`, and id `0` become `None`.
+///
+/// # Errors
+///
+/// Returns an error when the value is neither an integer node id nor a known stub.
+fn deserialize_optional_psl_node<'de, D>(deserializer: D) -> Result<Option<GenericNodeId>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct PslNodeVisitor;
+
+    impl Visitor<'_> for PslNodeVisitor {
+        type Value = Option<GenericNodeId>;
+
+        fn expecting(&self, formatter: &mut Formatter<'_>) -> FmtResult {
+            formatter.write_str("a node id, null, or a PSL stub")
+        }
+
+        fn visit_unit<E>(self) -> Result<Self::Value, E>
+        where
+            E: Error,
+        {
+            Ok(None)
+        }
+
+        fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
+        where
+            E: Error,
+        {
+            let id = u32::try_from(value).map_err(E::custom)?;
+            Ok(IdPrimitive::new(id).map(GenericNodeId::from))
+        }
+
+        fn visit_i64<E>(self, value: i64) -> Result<Self::Value, E>
+        where
+            E: Error,
+        {
+            let id = u32::try_from(value).map_err(E::custom)?;
+            Ok(IdPrimitive::new(id).map(GenericNodeId::from))
+        }
+
+        fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+        where
+            E: Error,
+        {
+            match value {
+                "PSL-NODE" | "PSL-NFA" => Ok(None),
+                _ => Err(E::custom(format!("unrecognized PSL node stub '{value}'"))),
+            }
+        }
+    }
+
+    deserializer.deserialize_any(PslNodeVisitor)
 }

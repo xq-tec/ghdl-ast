@@ -603,7 +603,7 @@ pub struct QualifiedExpression {
 pub struct NullLiteral {
     /// Access type of the null literal.
     #[serde(rename = "type")]
-    pub typ: SubtypeDefinitionNodeId,
+    pub typ: Option<SubtypeDefinitionNodeId>,
 }
 
 /// An allocator that initializes from a qualified expression (`new type_mark'(…)`).
