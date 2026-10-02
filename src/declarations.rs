@@ -432,6 +432,10 @@ pub struct FunctionDeclaration {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct FunctionBody {
+    /// Source location of the body.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Matching function declaration / specification.
     pub subprogram_specification: NodeId<FunctionDeclaration>,
     /// Declarations in the function declarative part.
@@ -466,6 +470,10 @@ pub struct ProcedureDeclaration {
 /// Procedure body (`procedure … is … begin … end`).
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProcedureBody {
+    /// Source location of the body.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Matching procedure declaration / specification.
     pub subprogram_specification: NodeId<ProcedureDeclaration>,
     /// Declarations in the procedure declarative part.

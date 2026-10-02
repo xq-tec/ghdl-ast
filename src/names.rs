@@ -358,6 +358,7 @@ pub struct SliceName {
 
 subset_declaration!(NamedEntity NamedEntityOwned NamedEntityNodeId {
     TypeDeclaration(TypeDeclaration),
+    SubtypeDeclaration(SubtypeDeclaration),
     VariableDeclaration(VariableDeclaration),
     ConstantDeclaration(ConstantDeclaration),
     SignalDeclaration(SignalDeclaration),

@@ -89,6 +89,10 @@ pub struct ReportStatement {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ReturnStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Returned value; absent for procedure returns.
@@ -137,6 +141,10 @@ pub struct SuspendStateStatement {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct VariableAssignmentStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Assignment target (variable name or selected/indexed name).

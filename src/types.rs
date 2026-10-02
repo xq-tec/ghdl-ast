@@ -85,6 +85,8 @@ pub struct IntegerTypeDefinition {
     /// Often absent on predefined / incomplete type nodes; the usable bounds
     /// then live on the corresponding [`IntegerSubtypeDefinition`].
     pub range_constraint: Option<RangeConstraintNodeId>,
+    /// GHDL's type staticness.
+    pub type_staticness: Option<Staticness>,
 }
 
 /// Integer subtype indication after analysis.
@@ -107,6 +109,8 @@ pub struct IntegerSubtypeDefinition {
     pub subtype_type_mark: Option<NameNodeId>,
     /// Optional resolution function / record / array resolution indication.
     pub resolution_indication: Option<GenericNodeId>,
+    /// GHDL's type staticness.
+    pub type_staticness: Option<Staticness>,
 }
 
 /// Anonymous floating type definition (`type T is range …`).
@@ -124,6 +128,8 @@ pub struct FloatingTypeDefinition {
     /// Often absent on predefined type nodes; usable bounds then live on the
     /// corresponding [`FloatingSubtypeDefinition`].
     pub range_constraint: Option<RangeConstraintNodeId>,
+    /// GHDL's type staticness.
+    pub type_staticness: Option<Staticness>,
 }
 
 /// Floating subtype indication after analysis.
@@ -141,6 +147,8 @@ pub struct FloatingSubtypeDefinition {
     pub subtype_type_mark: Option<NameNodeId>,
     /// Optional resolution function / record / array resolution indication.
     pub resolution_indication: Option<GenericNodeId>,
+    /// GHDL's type staticness.
+    pub type_staticness: Option<Staticness>,
 }
 
 /// Enumeration type definition (`type T is (…)`).
@@ -156,6 +164,8 @@ pub struct FloatingSubtypeDefinition {
 pub struct EnumerationTypeDefinition {
     /// Enumeration literals in declaration order.
     pub enumeration_literal_list: Vec<NodeId<EnumerationLiteral>>,
+    /// GHDL's type staticness.
+    pub type_staticness: Option<Staticness>,
 }
 
 /// Enumeration subtype indication after analysis.
@@ -183,6 +193,8 @@ pub struct EnumerationSubtypeDefinition {
     pub subtype_type_mark: Option<NameNodeId>,
     /// Optional resolution function / record / array resolution indication.
     pub resolution_indication: Option<GenericNodeId>,
+    /// GHDL's type staticness.
+    pub type_staticness: Option<Staticness>,
 }
 
 /// Placeholder type used by GHDL for incompletely analyzed or synthetic types.
@@ -210,6 +222,8 @@ pub struct WildcardTypeDefinition {}
 pub struct PhysicalTypeDefinition {
     /// Unit declarations in order (primary unit first).
     pub units: Vec<NodeId<UnitDeclaration>>,
+    /// GHDL's type staticness.
+    pub type_staticness: Option<Staticness>,
 }
 
 /// Physical subtype indication after analysis.
@@ -223,6 +237,8 @@ pub struct PhysicalSubtypeDefinition {
     pub parent_type: PhysicalTypeOrSubtypeNodeId,
     /// Constrained physical range of this subtype.
     pub range_constraint: RangeConstraintNodeId,
+    /// GHDL's type staticness.
+    pub type_staticness: Option<Staticness>,
 }
 
 /// Unconstrained or partially constrained array type definition.

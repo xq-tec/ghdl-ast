@@ -63,6 +63,10 @@ subset_declaration!(AssociationConversion AssociationConversionOwned Association
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AssociationElementByExpression {
+    /// Source location of the association element.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Formal name when this is a named association; `None` when positional.
     pub formal: Option<NameNodeId>,
     /// Optional conversion applied to the formal side of the association.
@@ -88,6 +92,10 @@ pub struct AssociationElementByExpression {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AssociationElementByName {
+    /// Source location of the association element.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Formal name when this is a named association; `None` when positional.
     pub formal: Option<NameNodeId>,
     /// Optional conversion applied to the formal side of the association.

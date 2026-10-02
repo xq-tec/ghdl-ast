@@ -7,6 +7,27 @@ use std::marker::PhantomData;
 
 use super::*;
 
+/// GHDL's `Iir_Staticness` for a type or expression.
+///
+/// Locally static subtypes may be shared. Globally static subtypes are rebuilt
+/// for each caller, because a generic bound differs between instances.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+pub enum Staticness {
+    /// The subtype is locally static.
+    #[serde(rename = "local")]
+    Local,
+    /// The subtype is globally static but not locally static.
+    #[serde(rename = "global")]
+    Global,
+    /// The subtype is not static.
+    #[serde(rename = "none")]
+    None,
+    /// GHDL exported an unknown or unset staticness.
+    #[serde(other)]
+    #[default]
+    Unknown,
+}
+
 /// Range direction of a discrete or floating range (`to` / `downto`).
 ///
 /// Corresponds to the direction in a VHDL range expression:
