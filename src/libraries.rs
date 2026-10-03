@@ -288,8 +288,11 @@ pub struct ArchitectureBody {
     /// Name of the entity this architecture implements.
     pub entity_name: NameNodeId,
     /// Owning design unit.
+    ///
+    /// `None` for the copy GHDL makes of an architecture whose entity has a subprogram generic,
+    /// one per instance.
     #[serde(rename = "parent")]
-    pub design_unit: NodeId<DesignUnit>,
+    pub design_unit: Option<NodeId<DesignUnit>>,
     /// Architecture declarative region.
     #[serde(default)]
     pub declarations: Vec<DeclarationNodeId>,
