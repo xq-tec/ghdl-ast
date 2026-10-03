@@ -315,6 +315,10 @@ subset_declaration!(PhysicalLiteral PhysicalLiteralOwned PhysicalLiteralNodeId {
 /// tools can still inspect the written value.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct OverflowLiteral {
+    /// Source location of the expression that overflowed.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Original literal expression that overflowed.
     pub literal_origin: ExpressionNodeId,
 }
@@ -687,10 +691,17 @@ pub struct ParenthesisExpression {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TypeConversion {
+    /// Source location of the conversion.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Target type mark of the conversion.
     pub type_mark: NameNodeId,
     /// Operand expression being converted.
-    pub expression: ExpressionNodeId,
+    ///
+    /// `None` for the formal-part conversion of an association element. GHDL moves
+    /// the operand into the element's formal.
+    pub expression: Option<ExpressionNodeId>,
     /// Result type of the conversion.
     #[serde(rename = "type")]
     pub typ: SubtypeDefinitionNodeId,
