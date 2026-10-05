@@ -248,6 +248,8 @@ pub struct IndexedName {
     /// Analyzed type of the indexed element.
     #[serde(rename = "type")]
     pub typ: Option<SubtypeDefinitionNodeId>,
+    /// Object declaration, dereference, or function call at the root of the prefix chain.
+    pub base_name: Option<GenericNodeId>,
 }
 
 /// Operator symbol used as a denoting name (`"+"` , `"and"`, …).
@@ -281,6 +283,13 @@ pub struct SelectedElement {
     pub prefix: PrefixNodeId,
     /// Named entity denoted by the selection (often an element declaration).
     pub named_entity: NamedEntityNodeId,
+    /// Type of the selected element.
+    #[serde(rename = "type")]
+    pub typ: Option<SubtypeDefinitionNodeId>,
+    /// Selected element name as written.
+    pub identifier: Option<Identifier>,
+    /// Object declaration, dereference, or function call at the root of the prefix chain.
+    pub base_name: Option<GenericNodeId>,
 }
 
 /// Selected name with `.all` (`prefix.all`).
@@ -354,6 +363,13 @@ pub struct SliceName {
     pub prefix: PrefixNodeId,
     /// Discrete range of the slice.
     pub suffix: RangeConstraintNodeId,
+    /// Type of the slice: an array subtype with the slice's index range.
+    #[serde(rename = "type")]
+    pub typ: Option<SubtypeDefinitionNodeId>,
+    /// Subtype created for the slice; equal to [`Self::typ`].
+    pub slice_subtype: Option<SubtypeDefinitionNodeId>,
+    /// Object declaration, dereference, or function call at the root of the prefix chain.
+    pub base_name: Option<GenericNodeId>,
 }
 
 subset_declaration!(NamedEntity NamedEntityOwned NamedEntityNodeId {

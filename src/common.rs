@@ -28,6 +28,50 @@ pub enum Staticness {
     Unknown,
 }
 
+/// GHDL's `Iir_Constraint`: how far an array or record subtype is constrained (LRM § 5.1).
+///
+/// ```vhdl
+/// type U is array (natural range <>) of bit_vector;  -- Unconstrained
+/// subtype P is U(0 to 1);                             -- PartiallyConstrained
+/// subtype F is U(0 to 1)(3 downto 0);                 -- FullyConstrained
+/// ```
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+pub enum ConstraintState {
+    /// No index or element constraint applies.
+    #[serde(rename = "unconstrained")]
+    Unconstrained,
+    /// Some, but not all, index ranges are constrained.
+    #[serde(rename = "partially constrained")]
+    PartiallyConstrained,
+    /// Every index range of the subtype and its subelements is constrained.
+    #[serde(rename = "fully constrained")]
+    FullyConstrained,
+}
+
+/// GHDL's `Number_Base_Type`: the base specifier of a bit string literal (LRM § 15.8).
+///
+/// GHDL expands the digits of a bit string literal during scanning, so the literal's
+/// string already holds the bits.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+pub enum BitStringBase {
+    /// A string literal, not a bit string literal.
+    #[serde(rename = "BASE_NONE")]
+    #[default]
+    None,
+    /// `b` / `sb` / `ub`.
+    #[serde(rename = "BASE_2")]
+    Binary,
+    /// `o` / `so` / `uo`.
+    #[serde(rename = "BASE_8")]
+    Octal,
+    /// `d`.
+    #[serde(rename = "BASE_10")]
+    Decimal,
+    /// `x` / `sx` / `ux`.
+    #[serde(rename = "BASE_16")]
+    Hexadecimal,
+}
+
 /// Range direction of a discrete or floating range (`to` / `downto`).
 ///
 /// Corresponds to the direction in a VHDL range expression:

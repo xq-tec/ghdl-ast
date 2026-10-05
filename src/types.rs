@@ -287,6 +287,23 @@ pub struct ArraySubtypeDefinition {
     pub subtype_type_mark: Option<NameNodeId>,
     /// Optional resolution function / record / array resolution indication.
     pub resolution_indication: Option<GenericNodeId>,
+    /// Staticness of the subtype; see [`Staticness`].
+    pub type_staticness: Option<Staticness>,
+    /// How far the subtype is constrained.
+    pub constraint_state: Option<ConstraintState>,
+    /// Element constraint from the subtype indication, as in `U(0 to 1)(3 downto 0)`.
+    pub array_element_constraint: Option<SubtypeDefinitionNodeId>,
+    /// Whether the subtype indication has an array constraint (`open` counts).
+    #[serde(default)]
+    pub has_array_constraint_flag: bool,
+    /// Whether the subtype indication has an element constraint.
+    #[serde(default)]
+    pub has_element_constraint_flag: bool,
+    /// Whether the subtype indication constrains the index ranges.
+    #[serde(default)]
+    pub index_constraint_flag: bool,
+    /// Type or subtype declaration that declares this subtype, if any.
+    pub type_declarator: Option<NamedEntityNodeId>,
 }
 
 /// Access type definition (`type T is access …`).
@@ -386,6 +403,10 @@ pub struct RecordSubtypeDefinition {
     /// Element constraints owned by this subtype (chain in GHDL).
     #[serde(default)]
     pub owned_elements: Vec<NodeId<RecordElementConstraint>>,
+    /// Staticness of the subtype; see [`Staticness`].
+    pub type_staticness: Option<Staticness>,
+    /// How far the subtype is constrained.
+    pub constraint_state: Option<ConstraintState>,
 }
 
 /// Access subtype indication after analysis.

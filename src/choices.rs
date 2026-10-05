@@ -57,6 +57,8 @@ pub struct ChoiceByExpression {
     pub element_type_flag: bool,
     /// Expression that selects this alternative.
     pub choice_expression: ExpressionNodeId,
+    /// Staticness of the choice expression.
+    pub choice_staticness: Option<Staticness>,
     /// Associated expression, individual association, or generate body.
     ///
     /// Used by aggregates and case generate. Absent when
@@ -149,6 +151,8 @@ pub struct ChoiceByRange {
     pub element_type_flag: bool,
     /// Discrete range of this choice.
     pub choice_range: RangeConstraintNodeId,
+    /// Staticness of the choice range.
+    pub choice_staticness: Option<Staticness>,
     /// Associated expression, individual association, or generate body.
     pub associated_expr: Option<GenericNodeId>,
     /// Associated sequential statements or waveforms.

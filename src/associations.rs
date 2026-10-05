@@ -154,6 +154,17 @@ pub struct AssociationElementByIndividual {
     /// Nested individual associations for elements of the formal.
     #[serde(default)]
     pub individual_associations: Vec<AssociationElementNodeId>,
+    /// Staticness of the subelement names of the sub-associations.
+    pub choice_staticness: Option<Staticness>,
+    /// Whether this association covers the whole formal.
+    #[serde(default)]
+    pub whole_association_flag: bool,
+    /// Whether the association appears in a formal part, which disables some of GHDL's checks.
+    #[serde(default)]
+    pub in_formal_flag: bool,
+    /// Whether the formal signal can share the actual signal (GHDL's signal collapsing).
+    #[serde(default)]
+    pub collapse_signal_flag: bool,
 }
 
 /// An association element for an interface package generic.

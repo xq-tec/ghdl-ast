@@ -252,6 +252,8 @@ pub struct FunctionCall {
     /// Return type of the call.
     #[serde(rename = "type")]
     pub return_type: SubtypeDefinitionNodeId,
+    /// Base of the name when the call is the prefix of a name; this call itself.
+    pub base_name: Option<GenericNodeId>,
 }
 
 /// An integer literal.
@@ -357,8 +359,22 @@ pub struct Aggregate {
     #[serde(rename = "association_choices")]
     pub associations: Vec<ChoiceNodeId>,
     /// Type of the aggregate after analysis, when determined.
+    ///
+    /// For an array aggregate, this is a fully constrained array subtype; see
+    /// [`StringLiteral::typ`]. For a record aggregate, it is the record type, or a record
+    /// subtype for an unbounded record.
     #[serde(rename = "type")]
     pub typ: Option<SubtypeDefinitionNodeId>,
+    /// Subtype of the aggregate when it supplies its own range; then equal to [`Self::typ`].
+    pub literal_subtype: Option<SubtypeDefinitionNodeId>,
+    /// Choice summary of an array aggregate, one per dimension.
+    pub aggregate_info: Option<NodeId<AggregateInfo>>,
+    /// Whether the aggregate can be built statically (a GHDL optimization hint).
+    #[serde(default)]
+    pub aggregate_expand_flag: bool,
+    /// Whether the aggregate's bounds are determined by its context.
+    #[serde(default)]
+    pub determined_aggregate_flag: bool,
 }
 
 /// A string literal (including bit-string literals after analysis).
@@ -369,10 +385,38 @@ pub struct Aggregate {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct StringLiteral {
     /// Latin-1 contents of the string.
+    ///
+    /// For a bit string literal, these are the expanded bits, with any length prefix applied.
     #[serde(rename = "string8_id")]
     pub value: Latin1String,
     /// Optional origin expression when this literal was derived (e.g. expanded).
     pub literal_origin: Option<ExpressionNodeId>,
+    /// Type of the literal after analysis.
+    ///
+    /// This is a fully constrained array subtype with the literal's index range: the range of
+    /// a constrained context, or the § 9.3.2 range (`S'LEFT`, direction of `S`) otherwise.
+    #[serde(rename = "type")]
+    pub typ: Option<SubtypeDefinitionNodeId>,
+    /// Subtype of the literal when it supplies its own range; then equal to [`Self::typ`].
+    pub literal_subtype: Option<SubtypeDefinitionNodeId>,
+    /// Number of characters of the literal in the source, as given by the scanner.
+    #[serde(default)]
+    pub literal_length: u32,
+    /// Number of elements of the string value.
+    #[serde(default)]
+    pub string_length: u32,
+    /// Base specifier of a bit string literal.
+    #[serde(default)]
+    pub bit_string_base: BitStringBase,
+    /// Whether a bit string literal has the `s` specifier (signed).
+    #[serde(default)]
+    pub has_signed: bool,
+    /// Whether a bit string literal has an `s` or `u` specifier.
+    #[serde(default)]
+    pub has_sign: bool,
+    /// Whether a bit string literal has a length prefix.
+    #[serde(default)]
+    pub has_length: bool,
 }
 
 /// An enumeration literal (including character enumeration values of a type).
@@ -663,6 +707,12 @@ pub struct AggregateInfo {
     /// Whether any named (choice => value) associations are present.
     #[serde(default)]
     pub aggr_named_flag: bool,
+    /// Lowest index named by a choice, for a range defined by the choices.
+    pub aggr_low_limit: Option<ExpressionNodeId>,
+    /// Highest index named by a choice, for a range defined by the choices.
+    pub aggr_high_limit: Option<ExpressionNodeId>,
+    /// Choice summary of the next dimension of a multi-dimensional aggregate.
+    pub sub_aggregate_info: Option<NodeId<AggregateInfo>>,
 }
 
 /// A parenthesized expression that preserves source parentheses in the AST.
