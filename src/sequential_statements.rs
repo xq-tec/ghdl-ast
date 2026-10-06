@@ -39,6 +39,10 @@ subset_declaration!(SequentialStatement SequentialStatementOwned SequentialState
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProcedureCallStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// The procedure call itself (name, implementation, associations).
@@ -109,6 +113,10 @@ pub struct ReturnStatement {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SimpleSignalAssignmentStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Assignment target (signal name, aggregate, indexed/selected name, …).
@@ -128,6 +136,10 @@ pub struct SimpleSignalAssignmentStatement {
 /// contain `wait` statements into a state machine.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SuspendStateStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Index of this suspend point within the process state machine.
     pub suspend_state_index: i32,
     /// Declaration of the suspend-state object.
@@ -201,6 +213,10 @@ pub struct WaitStatement {
 /// [`condition`](Elsif::condition) is absent.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct IfStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Condition of the initial `if`.
@@ -248,6 +264,10 @@ pub struct Elsif {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CaseStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Expression whose value selects an alternative.
@@ -289,6 +309,10 @@ pub struct AssertionStatement {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ExitStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Optional name of the loop to exit; defaults to the innermost loop.
@@ -304,6 +328,10 @@ pub struct ExitStatement {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct NullStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional statement label.
     pub label: Option<Identifier>,
 }
@@ -319,6 +347,10 @@ pub struct NullStatement {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ForLoopStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional loop label.
     pub label: Option<Identifier>,
     /// Loop parameter declaration (`identifier in discrete_range`).
@@ -341,6 +373,10 @@ pub struct ForLoopStatement {
 /// typically a missing condition means an infinite loop.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct WhileLoopStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional loop label.
     pub label: Option<Identifier>,
     /// Loop condition; may be absent for a bare infinite `loop`.
@@ -359,6 +395,10 @@ pub struct WhileLoopStatement {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct NextStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Optional name of the loop to continue; defaults to the innermost loop.
@@ -372,6 +412,10 @@ pub struct NextStatement {
 /// Not used in pure digital simulation.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BreakStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Optional condition.
@@ -399,6 +443,10 @@ pub struct BreakElement {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ConditionalSignalAssignmentStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Assignment target.
@@ -422,6 +470,10 @@ pub struct ConditionalSignalAssignmentStatement {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SelectedWaveformAssignmentStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Assignment target.
@@ -446,6 +498,10 @@ pub struct SelectedWaveformAssignmentStatement {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SignalForceAssignmentStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Forced signal target.
@@ -463,6 +519,10 @@ pub struct SignalForceAssignmentStatement {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SignalReleaseAssignmentStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Released signal target.
@@ -478,6 +538,10 @@ pub struct SignalReleaseAssignmentStatement {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ConditionalVariableAssignmentStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Assignment target.
@@ -496,6 +560,10 @@ pub struct ConditionalVariableAssignmentStatement {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SelectedVariableAssignmentStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional statement label.
     pub label: Option<Identifier>,
     /// Assignment target.
