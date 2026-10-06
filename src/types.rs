@@ -237,6 +237,10 @@ pub struct PhysicalSubtypeDefinition {
     pub parent_type: PhysicalTypeOrSubtypeNodeId,
     /// Constrained physical range of this subtype.
     pub range_constraint: RangeConstraintNodeId,
+    /// Type mark from the subtype indication, when present in the source.
+    pub subtype_type_mark: Option<NameNodeId>,
+    /// Optional resolution function / record / array resolution indication.
+    pub resolution_indication: Option<GenericNodeId>,
     /// GHDL's type staticness.
     pub type_staticness: Option<Staticness>,
 }
