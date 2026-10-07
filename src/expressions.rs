@@ -45,6 +45,9 @@ subset_declaration!(Expression ExpressionOwned ExpressionNodeId {
     Attribute(Attribute),
     Dereference(Dereference),
     ImplicitDereference(ImplicitDereference),
+    ExternalConstantName(ExternalConstantName),
+    ExternalSignalName(ExternalSignalName),
+    ExternalVariableName(ExternalVariableName),
 });
 
 subset_declaration!(Literal LiteralOwned LiteralNodeId {

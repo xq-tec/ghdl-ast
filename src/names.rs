@@ -35,6 +35,9 @@ subset_declaration!(Name NameOwned NameNodeId {
     SelectedName(SelectedName),
     SimpleName(SimpleName),
     SliceName(SliceName),
+    ExternalConstantName(ExternalConstantName),
+    ExternalSignalName(ExternalSignalName),
+    ExternalVariableName(ExternalVariableName),
 });
 
 impl Name<'_> {
@@ -45,6 +48,10 @@ impl Name<'_> {
             Self::AttributeName(attribute_name) => Some(attribute_name.named_entity),
             Self::SelectedName(selected_name) => Some(selected_name.named_entity),
             Self::SimpleName(simple_name) => Some(simple_name.named_entity),
+            // The named entity of an external name is the external name itself.
+            Self::ExternalConstantName(external_name) => external_name.named_entity,
+            Self::ExternalSignalName(external_name) => external_name.named_entity,
+            Self::ExternalVariableName(external_name) => external_name.named_entity,
             Self::IndexedName(_) | Self::SelectedByAllName(_) | Self::SliceName(_) => None,
         }
     }
@@ -78,6 +85,12 @@ impl Name<'_> {
             Self::SliceName(slice_name) => {
                 elements.push(NameElement::Other);
                 slice_name.prefix
+            },
+            Self::ExternalConstantName(ExternalConstantName { named_entity, .. })
+            | Self::ExternalSignalName(ExternalSignalName { named_entity, .. })
+            | Self::ExternalVariableName(ExternalVariableName { named_entity, .. }) => {
+                elements.push(NameElement::external(*named_entity));
+                return NameElements { elements };
             },
         };
 
@@ -124,6 +137,12 @@ impl Name<'_> {
                     elements.push(NameElement::Other);
                     return NameElements { elements };
                 },
+                Prefix::ExternalConstantName(ExternalConstantName { named_entity, .. })
+                | Prefix::ExternalSignalName(ExternalSignalName { named_entity, .. })
+                | Prefix::ExternalVariableName(ExternalVariableName { named_entity, .. }) => {
+                    elements.push(NameElement::external(*named_entity));
+                    return NameElements { elements };
+                },
             };
         }
     }
@@ -166,6 +185,13 @@ pub enum NameElement {
     Other,
 }
 
+impl NameElement {
+    /// The element of an external name, which is its own named entity.
+    fn external(named_entity: Option<NamedEntityNodeId>) -> Self {
+        named_entity.map_or(Self::Other, Self::NamedEntity)
+    }
+}
+
 subset_declaration!(AnySelectedName AnySelectedNameOwned AnySelectedNameNodeId {
     SelectedName(SelectedName),
     SelectedByAllName(SelectedByAllName),
@@ -194,6 +220,10 @@ subset_declaration!(Prefix PrefixOwned PrefixNodeId {
     Dereference(Dereference),
     ImplicitDereference(ImplicitDereference),
     OperatorSymbol(OperatorSymbol),
+
+    ExternalConstantName(ExternalConstantName),
+    ExternalSignalName(ExternalSignalName),
+    ExternalVariableName(ExternalVariableName),
 });
 
 /// Attribute name (`prefix'attr`).
@@ -414,6 +444,11 @@ subset_declaration!(NamedEntity NamedEntityOwned NamedEntityNodeId {
     IteratorDeclaration(IteratorDeclaration),
     // TODO "An implicit label declaration" (LRM § 6.1)
     Library(Library),
+    // External names are their own named entity: GHDL resolves the object only at elaboration.
+    ExternalConstantName(ExternalConstantName),
+    ExternalSignalName(ExternalSignalName),
+    ExternalVariableName(ExternalVariableName),
+
     /// Dummy node for unresolved names.
     ///
     /// There should only be one case where this variant occurs: as the named entity of a
@@ -454,11 +489,12 @@ pub struct ReferenceName {
 pub struct ExternalConstantName {
     /// Absolute, relative, or package pathname.
     pub external_pathname: Option<GenericNodeId>,
-    /// Resolved constant, when bound.
+    /// The external name itself: GHDL resolves the constant only at elaboration.
     pub named_entity: Option<NamedEntityNodeId>,
-    /// Declared subtype indication of the external name.
+    /// Declared subtype indication of the external name; may be a bare type mark.
     pub subtype_indication: Option<SubtypeDefinitionNodeId>,
-    /// Analyzed type.
+    /// Analyzed subtype of the view (LRM § 8.7): the object is viewed as if it were of this
+    /// subtype. Index ranges that it does not define come from the object at elaboration.
     #[serde(rename = "type")]
     pub typ: Option<SubtypeDefinitionNodeId>,
 }
@@ -472,11 +508,12 @@ pub struct ExternalConstantName {
 pub struct ExternalSignalName {
     /// Absolute, relative, or package pathname.
     pub external_pathname: Option<GenericNodeId>,
-    /// Resolved signal, when bound.
+    /// The external name itself: GHDL resolves the signal only at elaboration.
     pub named_entity: Option<NamedEntityNodeId>,
-    /// Declared subtype indication of the external name.
+    /// Declared subtype indication of the external name; may be a bare type mark.
     pub subtype_indication: Option<SubtypeDefinitionNodeId>,
-    /// Analyzed type.
+    /// Analyzed subtype of the view (LRM § 8.7): the object is viewed as if it were of this
+    /// subtype. Index ranges that it does not define come from the object at elaboration.
     #[serde(rename = "type")]
     pub typ: Option<SubtypeDefinitionNodeId>,
     /// Whether the external signal is treated as guarded.
@@ -495,11 +532,12 @@ pub struct ExternalSignalName {
 pub struct ExternalVariableName {
     /// Absolute, relative, or package pathname.
     pub external_pathname: Option<GenericNodeId>,
-    /// Resolved variable, when bound.
+    /// The external name itself: GHDL resolves the variable only at elaboration.
     pub named_entity: Option<NamedEntityNodeId>,
-    /// Declared subtype indication of the external name.
+    /// Declared subtype indication of the external name; may be a bare type mark.
     pub subtype_indication: Option<SubtypeDefinitionNodeId>,
-    /// Analyzed type.
+    /// Analyzed subtype of the view (LRM § 8.7): the object is viewed as if it were of this
+    /// subtype. Index ranges that it does not define come from the object at elaboration.
     #[serde(rename = "type")]
     pub typ: Option<SubtypeDefinitionNodeId>,
     /// Whether the target is a shared variable.
