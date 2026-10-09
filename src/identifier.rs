@@ -127,6 +127,17 @@ impl Identifier {
     pub fn into_original(self) -> CompactString {
         self.original.unwrap_or(self.normalized.0)
     }
+
+    /// Returns whether GHDL generated this identifier, such as the label `P0` that elaboration
+    /// gives an unlabeled process.
+    ///
+    /// The normalized form of an identifier from the source is lowercase, or an extended
+    /// identifier or character literal. A generated identifier contains uppercase letters, so it
+    /// never collides with one from the source.
+    #[must_use]
+    pub fn is_generated(&self) -> bool {
+        !is_normalized(&self.normalized)
+    }
 }
 
 impl<'de> Deserialize<'de> for Identifier {
@@ -244,5 +255,23 @@ mod test {
         check("abc", "abc");
         check("aBc", "abc");
         check("abcÜ", "abcü");
+    }
+
+    #[test]
+    fn test_identifier_is_generated() {
+        #[track_caller]
+        fn check(normalized: &str, generated: bool) {
+            let identifier = Identifier {
+                normalized: NormalizedIdentifier(CompactString::new(normalized)),
+                original: None,
+            };
+            assert_eq!(identifier.is_generated(), generated);
+        }
+
+        check("P0", true);
+        check("p0", false);
+        check("\\P0\\", false);
+        check("'A'", false);
+        check("Ölabel", true);
     }
 }

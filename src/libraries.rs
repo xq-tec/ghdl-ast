@@ -66,7 +66,27 @@ pub struct DesignUnit {
     /// Context clause items preceding the library unit.
     #[serde(default)]
     pub context_items: Vec<ContextItemNodeId>,
+    /// Analysis date: the position of this unit in the analysis order of its library.
+    ///
+    /// A unit analyzed later has a greater date. Dates of analyzed units start at 10; GHDL uses
+    /// smaller values for units that are not analyzed (4) and for default configurations (7).
+    pub date: u32,
+    /// Design units that this unit depends on, as recorded by analysis.
+    ///
+    /// This includes the units named in the context clause, the primary unit of a secondary
+    /// unit, and the units referenced in the library unit, such as an entity and architecture
+    /// in an entity aspect.
+    #[serde(default)]
+    pub dependence_list: Vec<DependenceNodeId>,
 }
+
+// A dependence is a design unit, an entity aspect with an architecture (`entity work.e(a)`)
+// that denotes the architecture, or the selected name `lib.unit` of a unit that was not loaded.
+subset_declaration!(Dependence DependenceOwned DependenceNodeId {
+    DesignUnit(DesignUnit),
+    EntityAspectEntity(EntityAspectEntity),
+    SelectedName(SelectedName),
+});
 
 subset_declaration!(LibraryUnit LibraryUnitOwned LibraryUnitNodeId {
     ConfigurationDeclaration(ConfigurationDeclaration),

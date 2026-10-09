@@ -63,6 +63,11 @@ pub struct ProcessStatement {
     /// Sequential statement body.
     #[serde(default)]
     pub sequential_statements: Vec<SequentialStatementNodeId>,
+    /// Concurrent statement that analysis replaced by this equivalent process, if any.
+    ///
+    /// Analysis replaces a concurrent procedure call by a process with the call followed by
+    /// `wait on` its signal actuals of mode `in` and `inout`.
+    pub process_origin: Option<ConcurrentStatementNodeId>,
 }
 
 /// A process statement with an explicit sensitivity list.
@@ -97,6 +102,11 @@ pub struct SensitizedProcessStatement {
     pub sequential_statements: Vec<SequentialStatementNodeId>,
     /// Sensitivity list (`process (…)`).
     pub sensitivity_list: SensitivityList,
+    /// Concurrent statement that analysis replaced by this equivalent process, if any.
+    ///
+    /// Analysis replaces a concurrent signal assignment or concurrent assertion by a
+    /// sensitized process, and computes its sensitivity list.
+    pub process_origin: Option<ConcurrentStatementNodeId>,
 }
 
 /// A component instantiation statement.
@@ -123,7 +133,17 @@ pub struct ComponentInstantiationStatement {
     /// Port map associations.
     #[serde(default)]
     pub port_map_aspects: Vec<AssociationElementNodeId>,
+    /// Copy of the instantiated entity or component with the generic actuals substituted.
+    ///
+    /// Present only if the entity or component has generic types, subprograms, or packages.
+    /// Its generics and ports are those of the instance.
+    pub instantiated_header: Option<InstantiatedHeaderNodeId>,
 }
+
+subset_declaration!(InstantiatedHeader InstantiatedHeaderOwned InstantiatedHeaderNodeId {
+    Entity(EntityDeclaration),
+    Component(ComponentDeclaration),
+});
 
 /// A block statement: a nested concurrent region with optional guard,
 /// generics, and ports.
