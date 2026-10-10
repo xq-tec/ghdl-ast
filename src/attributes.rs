@@ -26,6 +26,11 @@ pub struct AttributeValue {
     pub designated_entity: Option<NamedEntityNodeId>,
     /// Attribute specification that created this value.
     pub attribute_specification: Option<NodeId<AttributeSpecification>>,
+    /// The next attribute value of the same attribute specification, if any.
+    ///
+    /// An attribute specification with several designated entities has one attribute value
+    /// per entity, chained from its `attribute_value_specs`.
+    pub specs: Option<NodeId<AttributeValue>>,
 }
 
 /// Predefined attribute application (`prefix'kind`).

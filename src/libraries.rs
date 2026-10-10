@@ -184,6 +184,10 @@ pub struct EntityDeclaration {
     /// Entity declarative region.
     #[serde(default)]
     pub declarations: Vec<DeclarationNodeId>,
+    /// Entity statement part: passive concurrent statements, replaced by their equivalent
+    /// processes like those of an architecture.
+    #[serde(default)]
+    pub concurrent_statements: Vec<ConcurrentStatementNodeId>,
 }
 
 /// Package declaration (`package … is … end`).
@@ -365,6 +369,10 @@ pub struct LibraryClause {
 pub struct UseClause {
     /// Selected name of the package / declarations being used.
     pub selected_name: AnySelectedNameNodeId,
+    /// The use clause of the next selected name of the same clause, if any.
+    ///
+    /// GHDL splits `use a.x, b.y;` into a chain of use clauses, one per selected name.
+    pub use_clauses: Option<NodeId<UseClause>>,
 }
 
 /// Context reference (`context work.my_ctx;`).

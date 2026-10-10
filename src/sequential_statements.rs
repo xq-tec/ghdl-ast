@@ -125,9 +125,9 @@ pub struct SimpleSignalAssignmentStatement {
     pub delay_mechanism: DelayMechanism,
     /// Optional pulse-rejection limit for inertial delay (`reject` time).
     pub reject_time_expression: Option<ExpressionNodeId>,
-    /// Waveform elements; may be empty when the waveform is `unaffected`.
+    /// Waveform elements, or a single [`UnaffectedWaveform`] for `unaffected`.
     #[serde(default)]
-    pub waveforms: Vec<NodeId<WaveformElement>>,
+    pub waveforms: Vec<WaveformNodeId>,
 }
 
 /// GHDL-internal suspend-state machine statement inserted for simulation.

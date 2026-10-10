@@ -178,9 +178,11 @@ pub struct InterfaceFileDeclaration {
 pub struct UnitDeclaration {
     /// Unit identifier.
     pub identifier: Option<Identifier>,
-    /// Physical literal giving this unit in terms of a previously declared unit
-    /// (primary units still carry a literal node in GHDL's representation).
-    pub physical_literal: PhysicalLiteralNodeId,
+    /// The value of this unit in primary units, as an integer literal that analysis folded.
+    ///
+    /// Its `literal_origin` is the physical literal of the declaration, which gives the unit in
+    /// terms of a previously declared unit. A primary unit has the literal 1 without origin.
+    pub physical_literal: NodeId<IntegerLiteral>,
     /// Analyzed physical type of the unit.
     #[serde(rename = "type")]
     pub typ: Option<SubtypeDefinitionNodeId>,
@@ -197,6 +199,10 @@ pub struct UnitDeclaration {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct InterfaceConstantDeclaration {
+    /// Source location of the declaration.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Constant interface identifier (`None` in rare unnamed positions).
     pub identifier: Option<Identifier>,
 
@@ -223,6 +229,10 @@ pub struct InterfaceConstantDeclaration {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ConstantDeclaration {
+    /// Source location of the declaration.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Constant identifier.
     pub identifier: Identifier,
 
@@ -248,6 +258,10 @@ pub struct ConstantDeclaration {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct InterfaceSignalDeclaration {
+    /// Source location of the declaration.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Signal interface identifier.
     pub identifier: Identifier,
 
@@ -277,6 +291,10 @@ pub struct InterfaceSignalDeclaration {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SignalDeclaration {
+    /// Source location of the declaration.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Signal identifier.
     pub identifier: Identifier,
 
@@ -324,6 +342,10 @@ pub struct InterfaceVariableDeclaration {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct VariableDeclaration {
+    /// Source location of the declaration.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Variable identifier.
     pub identifier: Identifier,
 
@@ -3458,6 +3480,10 @@ pub struct ElementDeclaration {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct FileDeclaration {
+    /// Source location of the declaration.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// File identifier.
     pub identifier: Option<Identifier>,
     /// Analyzed file type.

@@ -53,6 +53,10 @@ subset_declaration!(SimultaneousStatement SimultaneousStatementOwned Simultaneou
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProcessStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional process label.
     pub label: Option<Identifier>,
     /// Whether this is a postponed process (runs in the postponed region).
@@ -90,6 +94,10 @@ pub struct ProcessStatement {
 /// ```
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SensitizedProcessStatement {
+    /// Source location of the statement.
+    #[serde(rename = "loc")]
+    pub location: Option<Location>,
+
     /// Optional process label.
     pub label: Option<Identifier>,
     /// Whether this is a postponed process.
@@ -219,9 +227,9 @@ pub struct ConcurrentSimpleSignalAssignment {
     pub delay_mechanism: DelayMechanism,
     /// Optional pulse-rejection limit.
     pub reject_time_expression: Option<ExpressionNodeId>,
-    /// Waveform elements.
+    /// Waveform elements, or a single [`UnaffectedWaveform`] for `unaffected`.
     #[serde(default)]
-    pub waveforms: Vec<NodeId<WaveformElement>>,
+    pub waveforms: Vec<WaveformNodeId>,
     /// Guard signal declaration when this is a guarded assignment inside a block.
     ///
     /// May also point at the assignment itself as a GHDL kludge marking it guarded

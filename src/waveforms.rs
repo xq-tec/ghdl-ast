@@ -1,10 +1,15 @@
 //! Waveforms and conditional expressions used by signal assignments.
 //!
-//! A waveform is a chain of [`WaveformElement`] nodes (and possibly a trailing
-//! [`UnaffectedWaveform`]). Conditional assignments wrap those waveforms or
+//! A waveform is a list of [`WaveformElement`] nodes, or a single [`UnaffectedWaveform`]
+//! ([`Waveform`]). Conditional assignments wrap those waveforms or
 //! expressions in [`ConditionalWaveform`] / [`ConditionalExpression`] chains.
 
 use super::*;
+
+subset_declaration!(Waveform WaveformOwned WaveformNodeId {
+    Element(WaveformElement),
+    Unaffected(UnaffectedWaveform),
+});
 
 /// One transaction in a signal-assignment waveform (`value [after time]`).
 ///
@@ -48,9 +53,9 @@ pub struct WaveformElement {
 pub struct ConditionalWaveform {
     /// Condition of this arm; absent for the final `else` waveform.
     pub condition: Option<ExpressionNodeId>,
-    /// Waveform elements driven when this arm is selected.
+    /// Waveform elements driven when this arm is selected, or a single [`UnaffectedWaveform`].
     #[serde(default)]
-    pub waveforms: Vec<NodeId<WaveformElement>>,
+    pub waveforms: Vec<WaveformNodeId>,
 }
 
 /// The `unaffected` reserved word in a waveform.

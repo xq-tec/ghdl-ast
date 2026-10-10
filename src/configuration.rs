@@ -18,8 +18,12 @@ use super::*;
 pub struct EntityAspectEntity {
     /// Name of the entity declaration (often `library.entity`, sometimes simple).
     pub entity_name: NameNodeId,
-    /// Optional architecture simple name when an architecture is written.
-    pub architecture: Option<NodeId<SimpleName>>,
+    /// Architecture name: a simple name when an architecture is written, or a reference name
+    /// to the architecture that analysis determined.
+    ///
+    /// Canonicalization sets a reference name to the architecture of the block configuration
+    /// when a component configuration's entity aspect has none.
+    pub architecture: Option<DenotingNameNodeId>,
 }
 
 subset_declaration!(InstantiatedUnit InstantiatedUnitOwned InstantiatedUnitNodeId {
