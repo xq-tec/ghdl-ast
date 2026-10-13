@@ -31,6 +31,9 @@ subset_declaration!(DenotingName DenotingNameOwned DenotingNameNodeId {
 subset_declaration!(Name NameOwned NameNodeId {
     AttributeName(AttributeName),
     IndexedName(IndexedName),
+    /// An operator symbol is a name (LRM § 8.1), such as the uninstantiated subprogram of
+    /// `function plus is new "+" generic map (…)` or the actual of `add => "+"`.
+    OperatorSymbol(OperatorSymbol),
     SelectedByAllName(SelectedByAllName),
     SelectedName(SelectedName),
     SimpleName(SimpleName),
@@ -46,6 +49,7 @@ impl Name<'_> {
     pub fn named_entity(&self) -> Option<NamedEntityNodeId> {
         match self {
             Self::AttributeName(attribute_name) => Some(attribute_name.named_entity),
+            Self::OperatorSymbol(operator_symbol) => operator_symbol.named_entity,
             Self::SelectedName(selected_name) => Some(selected_name.named_entity),
             Self::SimpleName(simple_name) => Some(simple_name.named_entity),
             // The named entity of an external name is the external name itself.
@@ -70,6 +74,10 @@ impl Name<'_> {
                 elements.push(NameElement::Other);
                 indexed_name.prefix
             },
+            Self::OperatorSymbol(operator_symbol) => {
+                elements.push(NameElement::optional(operator_symbol.named_entity));
+                return NameElements { elements };
+            },
             Self::SelectedByAllName(selected_by_all_name) => {
                 elements.push(NameElement::All);
                 selected_by_all_name.prefix
@@ -89,7 +97,7 @@ impl Name<'_> {
             Self::ExternalConstantName(ExternalConstantName { named_entity, .. })
             | Self::ExternalSignalName(ExternalSignalName { named_entity, .. })
             | Self::ExternalVariableName(ExternalVariableName { named_entity, .. }) => {
-                elements.push(NameElement::external(*named_entity));
+                elements.push(NameElement::optional(*named_entity));
                 return NameElements { elements };
             },
         };
@@ -117,6 +125,11 @@ impl Name<'_> {
                     slice_name.prefix
                 },
 
+                Prefix::Attribute(attribute) => {
+                    // A predefined attribute is not a named entity
+                    elements.push(NameElement::Other);
+                    attribute.prefix
+                },
                 Prefix::SelectedElement(selected_element) => {
                     elements.push(NameElement::NamedEntity(selected_element.named_entity));
                     selected_element.prefix
@@ -133,14 +146,14 @@ impl Name<'_> {
                     // Implicit operation, not an element of the name
                     implicit_dereference.prefix
                 },
-                Prefix::OperatorSymbol(_) => {
-                    elements.push(NameElement::Other);
+                Prefix::OperatorSymbol(operator_symbol) => {
+                    elements.push(NameElement::optional(operator_symbol.named_entity));
                     return NameElements { elements };
                 },
                 Prefix::ExternalConstantName(ExternalConstantName { named_entity, .. })
                 | Prefix::ExternalSignalName(ExternalSignalName { named_entity, .. })
                 | Prefix::ExternalVariableName(ExternalVariableName { named_entity, .. }) => {
-                    elements.push(NameElement::external(*named_entity));
+                    elements.push(NameElement::optional(*named_entity));
                     return NameElements { elements };
                 },
             };
@@ -186,8 +199,9 @@ pub enum NameElement {
 }
 
 impl NameElement {
-    /// The element of an external name, which is its own named entity.
-    fn external(named_entity: Option<NamedEntityNodeId>) -> Self {
+    /// An element whose named entity may be unknown, such as an external name (its own named
+    /// entity) or an operator symbol.
+    fn optional(named_entity: Option<NamedEntityNodeId>) -> Self {
         named_entity.map_or(Self::Other, Self::NamedEntity)
     }
 }
@@ -215,6 +229,9 @@ subset_declaration!(Prefix PrefixOwned PrefixNodeId {
     SimpleName(SimpleName),
     SliceName(SliceName),
 
+    /// A predefined attribute is an attribute name (LRM § 8.6), and so a prefix (LRM § 8.1), such
+    /// as the prefix of `s'last_value.a`, `v'delayed(2 to 3)`, or `s'delayed(1 ns)'event`.
+    Attribute(Attribute),
     SelectedElement(SelectedElement),
     FunctionCall(FunctionCall),
     Dereference(Dereference),
@@ -284,9 +301,10 @@ pub struct IndexedName {
 
 /// Operator symbol used as a denoting name (`"+"` , `"and"`, …).
 ///
-/// Appears in overload resolution, alias targets, and attribute designators for
-/// operators. The identifier holds the operator string (including quotes in the
-/// source representation GHDL stores).
+/// Appears in overload resolution, alias targets, attribute designators for
+/// operators, subprogram instantiations, and generic subprogram actuals. The
+/// identifier holds the operator string (including quotes in the source
+/// representation GHDL stores).
 ///
 /// ```vhdl
 /// function "+" (l, r : my_t) return my_t;
