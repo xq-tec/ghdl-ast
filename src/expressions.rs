@@ -762,16 +762,20 @@ pub struct TypeConversion {
     pub type_conversion_subtype: Option<SubtypeDefinitionNodeId>,
 }
 
-/// A simple aggregate used by GHDL for expanded string / bit-string literals.
+/// A simple aggregate created by GHDL when it folds a literal or an expression.
 ///
-/// The list holds element literals (typically [`EnumerationLiteral`] nodes for
-/// character values). Prefer [`StringLiteral`] / [`Aggregate`] for source-level
-/// forms; this node appears when GHDL expands a literal into element-wise form.
+/// GHDL creates it for expanded string and bit-string literals and for folded
+/// concatenations of locally static values, such as `1 & 2`. Prefer
+/// [`StringLiteral`] / [`Aggregate`] for source-level forms.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SimpleAggregate {
-    /// Element literals of the expanded aggregate.
+    /// Element literals of the folded aggregate.
+    ///
+    /// Each element is an [`EnumerationLiteral`], an [`IntegerLiteral`], a
+    /// [`PhysicalIntLiteral`] / [`PhysicalFpLiteral`], a [`FloatingPointLiteral`],
+    /// or an [`OverflowLiteral`] when folding failed.
     #[serde(default)]
-    pub simple_aggregate_list: Vec<NodeId<EnumerationLiteral>>,
+    pub simple_aggregate_list: Vec<GenericNodeId>,
     /// Type of the simple aggregate.
     #[serde(rename = "type")]
     pub typ: SubtypeDefinitionNodeId,
